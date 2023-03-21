@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+message EigenMatrix {
+    uint32 rows = 1;
+    uint32 cols = 2;
+    repeated double data = 3;
+}
+
+message EigenMatrixInt {
+    uint32 rows = 1;
+    uint32 cols = 2;
+    repeated int32 data = 3;
+}
+
+message EigenVector {
+    uint32 size = 1;
+    repeated double data = 2;
+}
+
+message LambdaBlock {
+    double tau = 1;
+    EigenMatrix phi = 2;
+    EigenMatrix psi = 3;
+    EigenMatrix lamb = 4;
+}
+
+
+message MultivariateMixtureState {
+    int32 ma = 1;
+    int32 mna = 2;
+    int32 mtot = 3;
+
+    repeated EigenVector a_means = 4;
+    repeated EigenVector na_means = 5;
+
+    repeated EigenMatrix a_deltas = 6;
+    repeated EigenMatrix na_deltas = 7;
+
+    EigenVector a_jumps = 8;
+    EigenVector na_jumps = 9;
+
+    repeated int32 clus_alloc = 10;
+    double u = 11;
+
+    repeated EigenVector etas = 12;
+    EigenVector sigma_bar = 13;
+
+    LambdaBlock lamb_block = 14;
+
+}
