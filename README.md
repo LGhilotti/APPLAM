@@ -3,7 +3,7 @@ This repository contains the code for running the block Gibbs-sampler designed f
 
 ## Instructions for compiling the code
 From the Command line:
-1) move to src/ ;
+1) move to pp_mix/src/ ;
 2) run the following commands
 ```
 make compile_protos
