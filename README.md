@@ -1,8 +1,9 @@
 # APPLAM
 This repository contains the code for running the block Gibbs-sampler designed for the APPLAM model; additionally, it contains data and code for replicating simulations and application.
 
-### Example for running the algorithm
+## Example for running the algorithm
 
+```
 #############################################
 ### IMPORT LIBRARIES AND FUNCTIONS ##########
 #############################################
@@ -53,11 +54,15 @@ log_ev=100
 # Set dimension of the latent space
 d = 3
 
-################################################
-############### DATA ###########################
-################################################
+#######################################
+### READ DATA AND PRE-PROCESSING ######
+#######################################
 
 # Upload your data in n x p matrix in variable "data"
+# scaling of data
+centering_var=stat.median(np.mean(data,0))
+scaling_var=stat.median(np.std(data,0))
+data_scaled=(data-centering_var)/scaling_var
 
 ####################################
 ##### HYPERPARAMETERS ##############
@@ -82,9 +87,6 @@ hyperpar.dpp.s = s
 
 hyperpar.wishart.nu = hyperpar.wishart.nu + d
 
-# hyperquare side length
-sidelength = 30
-
 ###################################
 ######## MCMC SAMPLER #############
 ###################################
@@ -93,6 +95,7 @@ sidelength = 30
 sampler = ConditionalMCMC(hyperpar = hyperpar)
 
 # Run the algorithm
-sampler.run(ntrick, nburn, niter, thin, data, d, sidelength, log_every = log_ev)
-# with no ranges should return ERROR
-#sampler.run_binary(ntrick, nburn, niter, thin, data, d, log_every = log_ev)
+sampler.run(ntrick, nburn, niter, thin, data_scaled, d, log_every = log_ev)
+
+# Use sampler.serialize_chains(...) to save the serialized chain produced by the sampler
+```
