@@ -13,17 +13,7 @@ import os
 import pandas as pd
 import statistics as stat
 
-# import pymc3 as pm
-import pickle
-import matplotlib.pyplot as plt
 from google.protobuf import text_format
-from scipy.stats import multivariate_normal as mvn
-from scipy.stats import skewnorm
-from scipy.stats import norm, mode
-from scipy.interpolate import griddata
-from sklearn.metrics import adjusted_rand_score
-from math import sqrt
-from itertools import product
 
 import sys
 sys.path.append('.')
