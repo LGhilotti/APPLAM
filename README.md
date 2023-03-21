@@ -1,6 +1,14 @@
 # APPLAM
 This repository contains the code for running the block Gibbs-sampler designed for the APPLAM model; additionally, it contains data and code for replicating simulations and application.
 
+## Instructions for compiling the code
+From the Command line:
+1) move to src/ ;
+2) run the following command
+```
+make generate_pybind
+```
+
 ## Example for running the algorithm
 
 ```
