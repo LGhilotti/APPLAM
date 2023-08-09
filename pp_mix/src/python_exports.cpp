@@ -178,6 +178,160 @@ std::tuple<std::deque<py::bytes>, double , double>
 }
 
 
+/////////////////////////// This is the main function provided to Python user - ISOTROPIC VERSION
+
+std::tuple<std::deque<py::bytes>, double , double>
+ _run_pp_mix_isotropic(int ntrick, int burnin, int niter, int thin,
+                                  std::string serialized_data, //const Eigen::MatrixXd &data,
+                                  std::string serialized_params,
+                                  int d,
+                                  std::string serialized_ranges, //const Eigen::MatrixXd &ranges,
+                                  std::vector<int> init_allocs,
+				  int log_every = 200) {
+  Params params;
+  params.ParseFromString(serialized_params);
+  Eigen::MatrixXd data;
+  Eigen::MatrixXd ranges;
+
+  {
+    EigenMatrix data_proto;
+    data_proto.ParseFromString(serialized_data);
+    data = to_eigen(data_proto);
+    EigenMatrix ranges_proto;
+    ranges_proto.ParseFromString(serialized_ranges);
+    ranges = to_eigen(ranges_proto);
+  }
+
+  std::deque<py::bytes> out;
+  DeterminantalPP* pp_mix = make_dpp(params, ranges);
+  BasePrec* g = make_delta(params, d);
+
+  MCMCsampler::MultivariateConditionalMCMC sampler(pp_mix, g, params, d);
+  sampler.initialize(data);
+
+  Eigen::VectorXi init_allocs_ = Eigen::Map<Eigen::VectorXi>(init_allocs.data(), init_allocs.size());
+  sampler.set_clus_alloc(init_allocs_);
+  sampler._relabel();
+  py::print("Number means in trick phase: ", sampler.get_num_a_means());
+
+  for (int i = 0; i < ntrick; i++) {
+    sampler.run_one_trick();
+    if ((i + 1) % log_every == 0) {
+      py::print("Trick, iter #", i + 1, " / ", ntrick);
+    }
+  }
+
+  for (int i = 0; i < burnin; i++) {
+    sampler.run_one();
+    if ((i + 1) % log_every == 0) {
+      py::print("Burnin, iter #", i + 1, " / ", burnin);
+    }
+  }
+
+  for (int i = 0; i < niter; i++) {
+    sampler.run_one();
+    if (i % thin == 0) {
+      std::string s;
+      MultivariateMixtureState curr;
+      sampler.get_state_as_proto(&curr);
+      curr.SerializeToString(&s);
+      out.push_back((py::bytes)s);
+    }
+
+    if ((i + 1) % log_every == 0) {
+      py::print("Running, iter #", i + 1, " / ", niter);
+    }
+  }
+
+  py::object Decimal = py::module_::import("decimal").attr("Decimal");
+
+  py::print("Allocated Means acceptance rate ", Decimal(sampler.a_means_acceptance_rate()));
+  py::print("Lambda acceptance rate ", Decimal(sampler.Lambda_acceptance_rate()));
+
+  return std::make_tuple(out,sampler.a_means_acceptance_rate(),sampler.Lambda_acceptance_rate());
+}
+
+/////////////////////////// This is the main function provided to Python user FOR 0/1 RESPONSES - ISOTROPIC
+
+std::tuple<std::deque<py::bytes>, double , double>
+ _run_pp_mix_binary_isotropic(int ntrick, int burnin, int niter, int thin,
+                                  std::string serialized_data, //const Eigen::MatrixXi &data,
+                                  std::string serialized_params,
+                                  int d,
+                                  std::string serialized_ranges, //const Eigen::MatrixXd &ranges,
+                                  std::vector<int> init_allocs,
+				  int log_every = 200) {
+  Params params;
+  params.ParseFromString(serialized_params);
+  Eigen::MatrixXd data;
+  Eigen::MatrixXd ranges;
+
+  {
+    EigenMatrix data_proto;
+    data_proto.ParseFromString(serialized_data);
+    data = to_eigen(data_proto);
+    EigenMatrix ranges_proto;
+    ranges_proto.ParseFromString(serialized_ranges);
+    ranges = to_eigen(ranges_proto);
+  }
+
+  std::deque<py::bytes> out;
+  DeterminantalPP* pp_mix = make_dpp(params, ranges);
+  BasePrec* g = make_delta(params, d);
+
+  MCMCsampler::MultivariateConditionalMCMC sampler(pp_mix, g, params, d);
+  sampler.initialize_binary(data);
+
+  Eigen::VectorXi init_allocs_ = Eigen::Map<Eigen::VectorXi>(init_allocs.data(), init_allocs.size());
+  sampler.set_clus_alloc(init_allocs_);
+  sampler._relabel();
+  py::print("Number means in trick phase: ", sampler.get_num_a_means());
+  py::print("initial mean abs zetas: ", sampler.get_data().array().abs().mean());
+
+  for (int i = 0; i < ntrick; i++) {
+    //py::print("current mean abs zetas: ", sampler.get_data().array().abs().mean());
+    //py::print("current mean abs etas: ", sampler.get_etas().array().abs().mean());
+
+    sampler.run_one_trick_binary();
+    if ((i + 1) % log_every == 0) {
+      py::print("Trick, iter #", i + 1, " / ", ntrick);
+    }
+  }
+
+  for (int i = 0; i < burnin; i++) {
+    //py::print("current mean abs zetas: ", sampler.get_data().array().abs().mean());
+    //py::print("current mean abs etas: ", sampler.get_etas().array().abs().mean());
+
+    sampler.run_one_binary();
+    if ((i + 1) % log_every == 0) {
+      py::print("Burnin, iter #", i + 1, " / ", burnin);
+    }
+  }
+
+  for (int i = 0; i < niter; i++) {
+    sampler.run_one_binary();
+    if (i % thin == 0) {
+      std::string s;
+      MultivariateMixtureState curr;
+      sampler.get_state_as_proto(&curr);
+      curr.SerializeToString(&s);
+      out.push_back((py::bytes)s);
+    }
+
+    if ((i + 1) % log_every == 0) {
+      py::print("Running, iter #", i + 1, " / ", niter);
+    }
+  }
+
+  py::object Decimal = py::module_::import("decimal").attr("Decimal");
+
+  py::print("Allocated Means acceptance rate ", Decimal(sampler.a_means_acceptance_rate()));
+  py::print("Lambda acceptance rate ", Decimal(sampler.Lambda_acceptance_rate()));
+
+  return std::make_tuple(out,sampler.a_means_acceptance_rate(),sampler.Lambda_acceptance_rate());
+}
+
+
 
 //params: coll Collector containing the algorithm chain
 //return: Index of the iteration containing the best estimate

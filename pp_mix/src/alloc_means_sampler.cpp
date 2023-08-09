@@ -170,7 +170,7 @@ void MeansSamplerClassic::perform_update_trick_na(MatrixXd& Ctilde) {
 /// MeansSamplerMala /////////
 ///////////////////////////////
 
-
+// WRONG! DOES NOT UPDATE Ctilde <- to be fixed if desired
 void MeansSamplerMala::perform_update_allocated(MatrixXd& Ctilde) {
 
   allmeans = mcmc->get_all_means();

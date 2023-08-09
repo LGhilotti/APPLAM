@@ -40,6 +40,23 @@ DeterminantalPP* make_dpp(const Params& params, int d){
 
 }
 
+// DPP
+DeterminantalPP* make_dpp_isotropic(const Params& params, const MatrixXd& ranges){
+
+    return new DeterminantalPP_isotropic(ranges, params.dpp().n(), params.dpp().c(), params.dpp().s() );
+
+}
+
+DeterminantalPP* make_dpp_isotropic(const Params& params, int d){
+
+    Eigen::MatrixXd ranges(2, d);
+    ranges.row(0) = RowVectorXd::Constant(d, -50);
+    ranges.row(1) = RowVectorXd::Constant(d, 50);
+
+    return new DeterminantalPP_isotropic(ranges, params.dpp().n(), params.dpp().c(), params.dpp().s() );
+
+}
+
 // Delta Precision
 BasePrec *make_delta(const Params &params, int d) {
   BasePrec *out;
