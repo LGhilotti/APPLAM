@@ -68,8 +68,6 @@ T LambdaSamplerMala::lambda_target_function::operator()(const Eigen::Matrix<T,Ei
   return output;
 }
 
-
-
 }
 
 #endif

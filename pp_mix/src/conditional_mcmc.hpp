@@ -94,7 +94,7 @@ class MultivariateConditionalMCMC {
  public:
 
     // DISTRIBUTIONS
-    DeterminantalPP *pp_mix;
+    BaseDeterminantalPP *pp_mix;
     BaseMultiPrec *g;
 
 

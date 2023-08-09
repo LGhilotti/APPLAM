@@ -7,7 +7,7 @@
 
 namespace MCMCsampler {
 
-MultivariateConditionalMCMC::MultivariateConditionalMCMC(DeterminantalPP *pp_mix,
+MultivariateConditionalMCMC::MultivariateConditionalMCMC(BaseDeterminantalPP *pp_mix,
                                                          BasePrec *g,
                                                          const Params &params,
                                                          int d)
@@ -15,7 +15,7 @@ MultivariateConditionalMCMC::MultivariateConditionalMCMC(DeterminantalPP *pp_mix
 
   set_prec(dynamic_cast<BaseMultiPrec *>(g));
   set_params(params,d);
-  sample_lambda = make_LambdaSampler(this, params);
+  sample_lambda = make_LambdaSampler(this, pp_mix, params);
   sample_means_obj = make_MeansSampler(this, params);
 
 }

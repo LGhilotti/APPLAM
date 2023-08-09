@@ -25,10 +25,12 @@ protected:
     int acc_sampled_Lambda = 0;
     int tot_sampled_Lambda = 0;
 
+    /*
     MatrixXd grad_log_ad;
     MatrixXd grad_log_analytic;
     double ln_dens_ad;
     double ln_dens_analytic;
+    */
 
 public:
     BaseLambdaSampler(MultivariateConditionalMCMC* mcmc): mcmc(mcmc) {}
@@ -36,10 +38,12 @@ public:
 
     virtual void perform(MatrixXd& Ctilde) = 0;
 
+    /*
     const MatrixXd& get_grad_log_ad(){return grad_log_ad;}
     const MatrixXd& get_grad_log_analytic(){return grad_log_analytic;}
     double get_ln_dens_ad(){return ln_dens_ad;}
     double get_ln_dens_analytic(){return ln_dens_analytic;}
+    */
 
     double Lambda_acc_rate();
 };
@@ -60,6 +64,7 @@ public:
 
 class LambdaSamplerMala : public BaseLambdaSampler {
 private:
+    DeterminantalPP* pp_mix_mala;
     double mala_p_lambda;
 
     double compute_ln_dens_analytic(const MatrixXd& lamb, double);
@@ -68,7 +73,9 @@ private:
     MatrixXd compute_grad_analytic(const MatrixXd& Ctilde);
     MatrixXd compute_gr_an(const MatrixXd& lamb, const MatrixXd& Ctilde, const VectorXd& Phis, double Ds);
 public:
-    LambdaSamplerMala(MultivariateConditionalMCMC* mcmc, double m_p): BaseLambdaSampler(mcmc), mala_p_lambda(m_p), lambda_tar_fun(*mcmc){}
+    LambdaSamplerMala(MultivariateConditionalMCMC* mcmc, double m_p):
+    BaseLambdaSampler(mcmc), mala_p_lambda(m_p), pp_mix_mala(dynamic_cast<DeterminantalPP *>(mcmc->pp_mix)), lambda_tar_fun(*mcmc){}
+
     void perform(MatrixXd& Ctilde) override;
 
     // TARGET FUNCTION OBJECT : must implement logfunction (as required in Mala)
@@ -83,6 +90,25 @@ public:
         template<typename T> T
         operator()(const Eigen::Matrix<T,Eigen::Dynamic,1> & lamb) const ;
     } lambda_tar_fun;
+};
+
+
+class LambdaSamplerMalaisotropic : public BaseLambdaSampler {
+private:
+    DeterminantalPPisotropic* pp_mix_mala;
+    double mala_p_lambda;
+
+    double compute_ln_dens_analytic(const MatrixXd& lamb);
+    double compute_ln_dens_analytic();
+    MatrixXd compute_grad_analytic(const MatrixXd& lamb);
+    MatrixXd compute_grad_analytic();
+    MatrixXd compute_gr_an(const MatrixXd& lamb);
+public:
+    LambdaSamplerMalaisotropic(MultivariateConditionalMCMC* mcmc, double m_p):
+    BaseLambdaSampler(mcmc), mala_p_lambda(m_p), pp_mix_mala(dynamic_cast<DeterminantalPPisotropic *>(mcmc->pp_mix)) {}
+
+    void perform(MatrixXd& Ctilde) override;
+
 };
 
 }

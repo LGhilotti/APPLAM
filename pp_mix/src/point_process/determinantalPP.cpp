@@ -1,4 +1,4 @@
-#include "determinantalPP.hpp"
+#include "BaseDeterminantalPP.hpp"
 
 #include <numeric>
 
@@ -6,7 +6,7 @@ using stan::math::LOG_SQRT_PI;
 double PI = stan::math::pi();
 
 
-DeterminantalPP::DeterminantalPP(const MatrixXd &ranges, int N, double c, double s):
+BaseDeterminantalPP::BaseDeterminantalPP(const MatrixXd &ranges, int N, double c, double s):
   ranges(ranges), N(N), c(c), s(s) {
 
   dim = ranges.cols();
@@ -41,7 +41,7 @@ DeterminantalPP::DeterminantalPP(const MatrixXd &ranges, int N, double c, double
 }
 
 
-void DeterminantalPP::set_decomposition(const MatrixXd * lambda) {
+void BaseDeterminantalPP::set_decomposition(const MatrixXd * lambda) {
 
   Lambda = lambda;
   //compute_eigen_and_cstar(&Ds, &phis, &phi_tildes, &c_star, lambda);
@@ -50,93 +50,9 @@ void DeterminantalPP::set_decomposition(const MatrixXd * lambda) {
 
 }
 
-/*
-void DeterminantalPP::compute_eigen_and_cstar(double * D_, VectorXd * Phis_, VectorXd * Phi_tildes_, double * C_star_, const MatrixXd * lambda){
-
-
-  *D_ = 0.0;
-  *C_star_ = 0.0;
-
-  LLT<MatrixXd> M ((*lambda).transpose() * (*lambda));
-  // compute determinant of Lambda^T Lambda
-  double det = std::pow(M.matrixL().determinant(),2);
-
-  double esp_fact = -2*std::pow(stan::math::pi(),2)*std::pow(det,1.0/dim)*std::pow(c,-2.0/dim);
-  ArrayXd vec_phi(Kappas.rows());
-  //#pragma omp parallel for default(none) shared(vec_phi, Kappas, s,esp_fact,M)
-  for (int i = 0; i < Kappas.rows(); i++) {
-    VectorXd sol = M.solve(Kappas.row(i).transpose());
-    double dot_prod = (Kappas.row(i)).dot(sol);
-    vec_phi(i) = s*std::exp(esp_fact*dot_prod);
-  }
-
-  *Phis_ = vec_phi.matrix();
-  *Phi_tildes_ = (vec_phi / (1 - vec_phi)).matrix();
-
-  *D_ = log(1 + (*Phi_tildes_).array()).sum();
-  *C_star_ = (*Phi_tildes_).sum();
-
-  return;
-
-}*/
-
-void DeterminantalPP::compute_eigen_and_cstar_red(double * D_, VectorXd * Phis_, VectorXd * Phi_tildes_, double * C_star_, const MatrixXd * lambda){
-
-
-  *D_ = 0.0;
-  *C_star_ = 0.0;
-
-  LLT<MatrixXd> M ((*lambda).transpose() * (*lambda));
-  // compute determinant of Lambda^T Lambda
-  double det = std::pow(M.matrixL().determinant(),2);
-
-  double esp_fact = -2*std::pow(stan::math::pi(),2)*std::pow(det,1.0/dim)*std::pow(c,-2.0/dim);
-//  ArrayXd vec_phi(Kappas.rows());
-  //#pragma omp parallel for default(none) shared(vec_phi, Kappas, s,esp_fact,M)
-  /*for (int i = 0; i < Kappas_red.rows(); i++) {
-    VectorXd sol = M.solve(Kappas_red.row(i).transpose());
-    double dot_prod = (Kappas_red.row(i)).dot(sol);
-    (*Phis_)(i) = s*std::exp(esp_fact*dot_prod);
-  }*/
-  ArrayXd dotprods = (Kappas_red * M.solve(Kappas_red.transpose())).diagonal();
-  *Phis_ = s*(esp_fact*dotprods).exp();
-
-  *Phi_tildes_ = ((*Phis_).array() / (1 - (*Phis_).array())).matrix();
-
-  *D_ = log(1 + (*Phi_tildes_).array()).sum() * 2.0 - log(1+(*Phi_tildes_)(0));
-  *C_star_ = (*Phi_tildes_).sum() * 2.0 - (*Phi_tildes_)(0);
-
-  return;
-
-}
-
-
-void DeterminantalPP::decompose_proposal(const MatrixXd& lambda) {
-
-  //compute_eigen_and_cstar(&Ds_tmp, &phis_tmp, &phi_tildes_tmp, &c_star_tmp, &lambda);
-  compute_eigen_and_cstar_red(&Ds_tmp_red, &phis_tmp_red, &phi_tildes_tmp_red, &c_star_tmp_red, &lambda);
-
-  return;
-
-}
-
-
-void DeterminantalPP::update_decomposition_from_proposal() {
-/*
-  std::swap(Ds, Ds_tmp);
-  phis.swap(phis_tmp);
-  phi_tildes.swap(phi_tildes_tmp);
-  std::swap(c_star, c_star_tmp);
-*/
-  std::swap(Ds_red, Ds_tmp_red);
-  phis_red.swap(phis_tmp_red);
-  phi_tildes_red.swap(phi_tildes_tmp_red);
-  std::swap(c_star_red, c_star_tmp_red);
-  return;
-}
 
 // compute just once the grid for summation over Z^dim
-void DeterminantalPP::compute_Kappas() {
+void BaseDeterminantalPP::compute_Kappas() {
 
   std::vector<double> k(2 * N + 1);
   for (int n = -N; n <= N; n++) {
@@ -161,19 +77,9 @@ void DeterminantalPP::compute_Kappas() {
 }
 
 
-double DeterminantalPP::dens_cond_in_proposal(const MatrixXd& x, double lndetCtil_prop, bool log) {
-
-  double out = ln_dens_process(x, lndetCtil_prop, Ds_tmp_red, c_star_tmp_red);
-  out -= std::log(1-std::exp(-Ds_tmp_red));
-
-  if (!log) out=std::exp(out);
-
-  return out;
-
-}
 
 
-double DeterminantalPP::dens_cond(const MatrixXd& x, double lndetCtil, bool log) {
+double BaseDeterminantalPP::dens_cond(const MatrixXd& x, double lndetCtil, bool log) {
 
   double out = ln_dens_process(x, lndetCtil, Ds_red, c_star_red);
   out -= std::log(1-std::exp(-Ds_red));
@@ -184,7 +90,7 @@ double DeterminantalPP::dens_cond(const MatrixXd& x, double lndetCtil, bool log)
 
 }
 
-double DeterminantalPP::ln_dens_process(const MatrixXd& x, double lndetCtil_p, double Ds_p,
+double BaseDeterminantalPP::ln_dens_process(const MatrixXd& x, double lndetCtil_p, double Ds_p,
    double c_star_p){
 
   double out;
@@ -221,7 +127,7 @@ double DeterminantalPP::ln_dens_process(const MatrixXd& x, double lndetCtil_p, d
 
 
 // this is computed wrt the Lambda matrix and the current decomposition (in phi,phi_tildes)
-double DeterminantalPP::papangelou(const MatrixXd& Ctilde, const MatrixXd &Ctilde_xi, bool log) {
+double BaseDeterminantalPP::papangelou(const MatrixXd& Ctilde, const MatrixXd &Ctilde_xi, bool log) {
   // starting from Ctilde with the current allmeans, it adds one row/column and compute the Ctilde'.
   // Transform xi to be in the unit cube centered in 0
   double out = -1.0*std::log(vol_range)+ 2.0 * std::log(Ctilde_xi.llt().matrixL().determinant()) - 2.0 * std::log(Ctilde.llt().matrixL().determinant());
@@ -235,7 +141,7 @@ double DeterminantalPP::papangelou(const MatrixXd& Ctilde, const MatrixXd &Ctild
 
 
 
-MatrixXd DeterminantalPP::sample_uniform(int npoints) {
+MatrixXd BaseDeterminantalPP::sample_uniform(int npoints) {
   MatrixXd out(npoints, dim);
   for (int j = 0; j < dim; j++) {
     for (int i = 0; i < npoints; i++) {
@@ -248,7 +154,7 @@ MatrixXd DeterminantalPP::sample_uniform(int npoints) {
 }
 
 
-VectorXd DeterminantalPP::phi_star_rng() {
+VectorXd BaseDeterminantalPP::phi_star_rng() {
   VectorXd out(dim);
   for (int i = 0; i < dim; i++) {
     out(i) = uniform_rng(ranges(0, i), ranges(1, i), Rng::Instance().get());
@@ -256,14 +162,14 @@ VectorXd DeterminantalPP::phi_star_rng() {
   return out;
 }
 
-double DeterminantalPP::phi_star_dens(VectorXd xi, bool log) {
+double BaseDeterminantalPP::phi_star_dens(VectorXd xi, bool log) {
   double out = std::log(c_star_red) - std::log(vol_range);
   if (!log) out = std::exp(out);
 
   return out;
 }
 
-MatrixXd DeterminantalPP::compute_Ctilde(const MatrixXd& means){
+MatrixXd BaseDeterminantalPP::compute_Ctilde(const MatrixXd& means){
 
   MatrixXd means_trans = ((A * means.transpose()).colwise() + b).transpose();
 //  std::cout<<"means_trans:\n"<<means_trans<<std::endl;
@@ -295,39 +201,8 @@ MatrixXd DeterminantalPP::compute_Ctilde(const MatrixXd& means){
   return Ctilde;
 }
 
-MatrixXd DeterminantalPP::compute_Ctilde_prop(const MatrixXd& means){
 
-  MatrixXd means_trans = ((A * means.transpose()).colwise() + b).transpose();
-  MatrixXd Ctilde(means_trans.rows(), means_trans.rows());
-
-  for (int l = 0; l < means_trans.rows()-1; l++) {
-    for (int m = l+1; m < means_trans.rows(); m++) {
-      //double aux = 0.0;
-      //RowVectorXd vec(means_trans.row(l)-means_trans.row(m));
-      VectorXd vec_c(means_trans.row(l)-means_trans.row(m));
-
-      //int nthreads;
-      //#pragma omp parallel for default(none) firstprivate(Kappas,vec, phi_tildes_p) reduction(+:aux)
-      /*for (int kind = 1; kind < Kappas_red.rows(); kind++) {
-        //nthreads = omp_get_num_threads();
-        //printf("Number of threads = %d\n", nthreads);
-        double dotprod = Kappas_red.row(kind).dot(vec);
-        aux += phi_tildes_tmp_red[kind] * std::cos(2. * stan::math::pi() * dotprod);
-      }*/
-      VectorXd dotprods = Kappas_red.bottomRows(Kappas_red.rows()-1) * vec_c;
-      double aux_c = (phi_tildes_tmp_red.bottomRows(Kappas_red.rows()-1).array() * (2. * stan::math::pi() * dotprods).array().cos()).sum();
-
-      Ctilde(l, m) = 2.0*aux_c + phi_tildes_tmp_red(0);
-      if (l!=m) Ctilde(m,l) = 2.0*aux_c + phi_tildes_tmp_red(0);
-    }
-  }
-  Ctilde.diagonal() = ArrayXd::Constant(means_trans.rows(), 2.*phi_tildes_tmp_red.sum() - phi_tildes_tmp_red(0));
-
-  return Ctilde;
-}
-
-
-void DeterminantalPP::sample_nonalloc_fullcond(MatrixXd *non_active, const MatrixXd &active,
+void BaseDeterminantalPP::sample_nonalloc_fullcond(MatrixXd *non_active, const MatrixXd &active,
                                  double psi_u, MatrixXd& Ctilde) {
   int npoints = non_active->rows();
   double c_star_na = c_star_red * psi_u;
@@ -401,4 +276,125 @@ void DeterminantalPP::sample_nonalloc_fullcond(MatrixXd *non_active, const Matri
   }
 
   return;
+}
+
+////////////////////// Overridden methods
+
+void DeterminantalPP::compute_eigen_and_cstar_red(double * D_, VectorXd * Phis_, VectorXd * Phi_tildes_, double * C_star_, const MatrixXd * lambda){
+
+
+  *D_ = 0.0;
+  *C_star_ = 0.0;
+
+  LLT<MatrixXd> M ((*lambda).transpose() * (*lambda));
+  // compute determinant of Lambda^T Lambda
+  double det = std::pow(M.matrixL().determinant(),2);
+
+  double esp_fact = -2*std::pow(stan::math::pi(),2)*std::pow(det,1.0/dim)*std::pow(c,-2.0/dim);
+//  ArrayXd vec_phi(Kappas.rows());
+  //#pragma omp parallel for default(none) shared(vec_phi, Kappas, s,esp_fact,M)
+  /*for (int i = 0; i < Kappas_red.rows(); i++) {
+    VectorXd sol = M.solve(Kappas_red.row(i).transpose());
+    double dot_prod = (Kappas_red.row(i)).dot(sol);
+    (*Phis_)(i) = s*std::exp(esp_fact*dot_prod);
+  }*/
+  ArrayXd dotprods = (Kappas_red * M.solve(Kappas_red.transpose())).diagonal();
+  *Phis_ = s*(esp_fact*dotprods).exp();
+
+  *Phi_tildes_ = ((*Phis_).array() / (1 - (*Phis_).array())).matrix();
+
+  *D_ = log(1 + (*Phi_tildes_).array()).sum() * 2.0 - log(1+(*Phi_tildes_)(0));
+  *C_star_ = (*Phi_tildes_).sum() * 2.0 - (*Phi_tildes_)(0);
+
+  return;
+
+}
+
+void DeterminantalPPisotropic::compute_eigen_and_cstar_red(double * D_, VectorXd * Phis_, VectorXd * Phi_tildes_, double * C_star_, const MatrixXd * lambda){
+
+
+  *D_ = 0.0;
+  *C_star_ = 0.0;
+
+  double esp_fact = -2*std::pow(stan::math::pi(),2)*std::pow(c,-2.0/dim);
+
+  ArrayXd dotprods = (Kappas_red * Kappas_red.transpose()).diagonal();
+  *Phis_ = s*(esp_fact*dotprods).exp();
+
+  *Phi_tildes_ = ((*Phis_).array() / (1 - (*Phis_).array())).matrix();
+
+  *D_ = log(1 + (*Phi_tildes_).array()).sum() * 2.0 - log(1+(*Phi_tildes_)(0));
+  *C_star_ = (*Phi_tildes_).sum() * 2.0 - (*Phi_tildes_)(0);
+
+  return;
+
+}
+
+
+void DeterminantalPP::decompose_proposal(const MatrixXd& lambda) {
+
+  //compute_eigen_and_cstar(&Ds_tmp, &phis_tmp, &phi_tildes_tmp, &c_star_tmp, &lambda);
+  compute_eigen_and_cstar_red(&Ds_tmp_red, &phis_tmp_red, &phi_tildes_tmp_red, &c_star_tmp_red, &lambda);
+
+  return;
+
+}
+
+
+void DeterminantalPP::update_decomposition_from_proposal() {
+/*
+  std::swap(Ds, Ds_tmp);
+  phis.swap(phis_tmp);
+  phi_tildes.swap(phi_tildes_tmp);
+  std::swap(c_star, c_star_tmp);
+*/
+  std::swap(Ds_red, Ds_tmp_red);
+  phis_red.swap(phis_tmp_red);
+  phi_tildes_red.swap(phi_tildes_tmp_red);
+  std::swap(c_star_red, c_star_tmp_red);
+  return;
+}
+
+
+double DeterminantalPP::dens_cond_in_proposal(const MatrixXd& x, double lndetCtil_prop, bool log) {
+
+  double out = ln_dens_process(x, lndetCtil_prop, Ds_tmp_red, c_star_tmp_red);
+  out -= std::log(1-std::exp(-Ds_tmp_red));
+
+  if (!log) out=std::exp(out);
+
+  return out;
+
+}
+
+
+MatrixXd DeterminantalPP::compute_Ctilde_prop(const MatrixXd& means){
+
+  MatrixXd means_trans = ((A * means.transpose()).colwise() + b).transpose();
+  MatrixXd Ctilde(means_trans.rows(), means_trans.rows());
+
+  for (int l = 0; l < means_trans.rows()-1; l++) {
+    for (int m = l+1; m < means_trans.rows(); m++) {
+      //double aux = 0.0;
+      //RowVectorXd vec(means_trans.row(l)-means_trans.row(m));
+      VectorXd vec_c(means_trans.row(l)-means_trans.row(m));
+
+      //int nthreads;
+      //#pragma omp parallel for default(none) firstprivate(Kappas,vec, phi_tildes_p) reduction(+:aux)
+      /*for (int kind = 1; kind < Kappas_red.rows(); kind++) {
+        //nthreads = omp_get_num_threads();
+        //printf("Number of threads = %d\n", nthreads);
+        double dotprod = Kappas_red.row(kind).dot(vec);
+        aux += phi_tildes_tmp_red[kind] * std::cos(2. * stan::math::pi() * dotprod);
+      }*/
+      VectorXd dotprods = Kappas_red.bottomRows(Kappas_red.rows()-1) * vec_c;
+      double aux_c = (phi_tildes_tmp_red.bottomRows(Kappas_red.rows()-1).array() * (2. * stan::math::pi() * dotprods).array().cos()).sum();
+
+      Ctilde(l, m) = 2.0*aux_c + phi_tildes_tmp_red(0);
+      if (l!=m) Ctilde(m,l) = 2.0*aux_c + phi_tildes_tmp_red(0);
+    }
+  }
+  Ctilde.diagonal() = ArrayXd::Constant(means_trans.rows(), 2.*phi_tildes_tmp_red.sum() - phi_tildes_tmp_red(0));
+
+  return Ctilde;
 }

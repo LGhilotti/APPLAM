@@ -4,12 +4,19 @@
 
 
 // Lambda sampler
-MCMCsampler::BaseLambdaSampler* make_LambdaSampler(MCMCsampler::MultivariateConditionalMCMC* mcmc, const Params& params){
+MCMCsampler::BaseLambdaSampler* make_LambdaSampler(MCMCsampler::MultivariateConditionalMCMC* mcmc,
+  BaseDeterminantalPP *pp_mix, const Params& params){
 
-    if (params.step_lambda_case()==Params::StepLambdaCase::kMhSigmaLambda)
+    if (params.step_lambda_case()==Params::StepLambdaCase::kMhSigmaLambda & typeid(*pp_mix).name() == "DeterminantalPP"){
       return new MCMCsampler::LambdaSamplerClassic(mcmc, params.mh_sigma_lambda());
+    } else if (params.step_lambda_case()==Params::StepLambdaCase::kMhSigmaLambda & typeid(*pp_mix).name() == "DeterminantalPPisotropic"){
+      exit();
+    } else if (params.step_lambda_case()==Params::StepLambdaCase::kMalaStepLambda & typeid(*pp_mix).name() == "DeterminantalPP"){
+      return new MCMCsampler::LambdaSamplerMala(mcmc, params.mala_step_lambda());
+    } else if (params.step_lambda_case()==Params::StepLambdaCase::kMalaStepLambda & typeid(*pp_mix).name() == "DeterminantalPPisotropic"){
+      return new MCMCsampler::LambdaSamplerMalaisotropic(mcmc, params.mala_step_lambda());
+    }
 
-    else return new MCMCsampler::LambdaSamplerMala(mcmc, params.mala_step_lambda());
 
 }
 
@@ -24,13 +31,13 @@ MCMCsampler::BaseMeansSampler* make_MeansSampler(MCMCsampler::MultivariateCondit
 }
 
 // DPP
-DeterminantalPP* make_dpp(const Params& params, const MatrixXd& ranges){
+BaseDeterminantalPP* make_dpp(const Params& params, const MatrixXd& ranges){
 
     return new DeterminantalPP(ranges, params.dpp().n(), params.dpp().c(), params.dpp().s() );
 
 }
 
-DeterminantalPP* make_dpp(const Params& params, int d){
+BaseDeterminantalPP* make_dpp(const Params& params, int d){
 
     Eigen::MatrixXd ranges(2, d);
     ranges.row(0) = RowVectorXd::Constant(d, -50);
@@ -41,19 +48,19 @@ DeterminantalPP* make_dpp(const Params& params, int d){
 }
 
 // DPP
-DeterminantalPP* make_dpp_isotropic(const Params& params, const MatrixXd& ranges){
+BaseDeterminantalPP* make_dpp_isotropic(const Params& params, const MatrixXd& ranges){
 
-    return new DeterminantalPP_isotropic(ranges, params.dpp().n(), params.dpp().c(), params.dpp().s() );
+    return new DeterminantalPPisotropic(ranges, params.dpp().n(), params.dpp().c(), params.dpp().s() );
 
 }
 
-DeterminantalPP* make_dpp_isotropic(const Params& params, int d){
+BaseDeterminantalPP* make_dpp_isotropic(const Params& params, int d){
 
     Eigen::MatrixXd ranges(2, d);
     ranges.row(0) = RowVectorXd::Constant(d, -50);
     ranges.row(1) = RowVectorXd::Constant(d, 50);
 
-    return new DeterminantalPP_isotropic(ranges, params.dpp().n(), params.dpp().c(), params.dpp().s() );
+    return new DeterminantalPPisotropic(ranges, params.dpp().n(), params.dpp().c(), params.dpp().s() );
 
 }
 

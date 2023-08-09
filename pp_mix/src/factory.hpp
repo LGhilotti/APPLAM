@@ -15,18 +15,19 @@
 #include "../protos/cpp/params.pb.h"
 
 // Lambda sampler
-MCMCsampler::BaseLambdaSampler* make_LambdaSampler(MCMCsampler::MultivariateConditionalMCMC* mcmc, const Params& params);
+MCMCsampler::BaseLambdaSampler* make_LambdaSampler(MCMCsampler::MultivariateConditionalMCMC* mcmc,
+  BaseDeterminantalPP *pp_mix, const Params& params);
 
 // AMeans sampler
 MCMCsampler::BaseMeansSampler* make_MeansSampler(MCMCsampler::MultivariateConditionalMCMC* mcmc, const Params& params);
 
 // DPP
-DeterminantalPP* make_dpp(const Params& params, const MatrixXd& ranges);
-DeterminantalPP* make_dpp(const Params& params, int d);
+BaseDeterminantalPP* make_dpp(const Params& params, const MatrixXd& ranges);
+BaseDeterminantalPP* make_dpp(const Params& params, int d);
 
 // DPP
-DeterminantalPP* make_dpp_isotropic(const Params& params, const MatrixXd& ranges);
-DeterminantalPP* make_dpp_isotropic(const Params& params, int d);
+BaseDeterminantalPP* make_dpp_isotropic(const Params& params, const MatrixXd& ranges);
+BaseDeterminantalPP* make_dpp_isotropic(const Params& params, int d);
 
 // Delta Precision
 BasePrec* make_delta(const Params& params, int d);

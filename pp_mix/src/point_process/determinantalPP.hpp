@@ -13,7 +13,7 @@
 using namespace Eigen;
 using namespace stan::math;
 
-class DeterminantalPP {
+class BaseDeterminantalPP {
 protected:
     MatrixXd ranges; //hyper-Rectangle R
     VectorXd diff_range;
@@ -38,12 +38,8 @@ protected:
     MatrixXd Kappas_red; // grid for approximating summation over Z^dim
     VectorXd phis_red;
     VectorXd phi_tildes_red;
-    VectorXd phis_tmp_red;
-    VectorXd phi_tildes_tmp_red;
     double Ds_red;
-    double Ds_tmp_red;
     double c_star_red;
-    double c_star_tmp_red;
     // Affine transformation to the unit square
     MatrixXd A;
     VectorXd b;
@@ -53,39 +49,23 @@ protected:
 
     // FOR PROPOSAL
      const MatrixXd * Lambda; // const pointer to the Lambda matrix
-/*
-    double c_star_tmp; // c* of X (DPP) wrt the last passed Lambda
-
-    // eigendecomposition params for last passed Lambda
-    VectorXd phis_tmp;
-    VectorXd phi_tildes_tmp;
-    double Ds_tmp;*/
 
 public:
 
-    DeterminantalPP(const MatrixXd& ranges, int N, double c, double s);
+    BaseDeterminantalPP(const MatrixXd& ranges, int N, double c, double s);
 
-    ~DeterminantalPP() {}
+    virtual ~BaseDeterminantalPP() {}
 
     // manages the decomposition in Ds, phi,... for the dpp (using or not lambda)
      // set the pointer to Lambda and performs the initial decomposition
     void set_decomposition(const MatrixXd * lambda);
 
     // modifies the passed Ds, phis, phi_tildes, c_star according to the dpp defined with lambda
-    //void compute_eigen_and_cstar(double * D_, VectorXd * Phis_, VectorXd * Phi_tildes_, double * C_star_, const MatrixXd * lambda);
-    void compute_eigen_and_cstar_red(double * D_, VectorXd * Phis_, VectorXd * Phi_tildes_, double * C_star_, const MatrixXd * lambda);
-
-    // manages decomposition wrt the passed lambda.
-    // it takes the proposed Lambda and performs decomposition, storing it in "tmp" variables
-    void decompose_proposal(const MatrixXd& lambda);
-
-    void update_decomposition_from_proposal();
+    virtual void compute_eigen_and_cstar_red(double * D_, VectorXd * Phis_, VectorXd * Phi_tildes_, double * C_star_, const MatrixXd * lambda) = 0;
 
     void compute_Kappas(); // compute just once the grid for summation over Z^dim
 
-    // computes (log default) density in x of cond process wrt the proposed matrix Lambda; USEFUL FOR MultiDpp.
-    // For UniDpp it just calls dens_cond (because does not depend on Lambda), for MultiDpp it uses "tmp" variables.
-    double dens_cond_in_proposal(const MatrixXd& x, double lndetCtil_prop, bool log=true);
+ // TO BE CHECKED IF CHANGES ARE NEEDED
 
     // computes (log default) density in x of cond process wrt the current decomposition (expressed by the Father variables Ds, phis,...)
     double dens_cond(const MatrixXd& x, double lndetCtil, bool log=true);
@@ -105,7 +85,6 @@ public:
     double phi_star_dens(VectorXd xi, bool log = true);
 
     MatrixXd compute_Ctilde(const MatrixXd& means);
-    MatrixXd compute_Ctilde_prop(const MatrixXd& means);
 
     // Sample B&D from posterior of mu_na
     void sample_nonalloc_fullcond(
@@ -148,15 +127,55 @@ public:
 
     double get_Ds_red() const {return Ds_red;}
 
-    const VectorXd& get_phi_tildes_tmp_red() const {return phi_tildes_tmp_red;}
-
-    const VectorXd& get_phis_tmp_red() const {return phis_tmp_red;}
-
-    double get_Ds_tmp_red() const {return Ds_tmp_red;}
-
     const MatrixXd& get_A() const {return A;}
 
     const VectorXd& get_b() const {return b;}
+
+};
+
+
+
+class DeterminantalPP : public BaseDeterminantalPP {
+private:
+  VectorXd phis_tmp_red;
+  VectorXd phi_tildes_tmp_red;
+  double Ds_tmp_red;
+  double c_star_tmp_red;
+
+public:
+  
+  // modifies the passed Ds, phis, phi_tildes, c_star according to the dpp defined with lambda
+  void compute_eigen_and_cstar_red(double * D_, VectorXd * Phis_, VectorXd * Phi_tildes_, double * C_star_, const MatrixXd * lambda) override;
+
+  // manages decomposition wrt the passed lambda.
+  // it takes the proposed Lambda and performs decomposition, storing it in "tmp" variables
+  void decompose_proposal(const MatrixXd& lambda);
+
+  void update_decomposition_from_proposal();
+
+  // computes (log default) density in x of cond process wrt the proposed matrix Lambda; USEFUL FOR MultiDpp.
+  // For UniDpp it just calls dens_cond (because does not depend on Lambda), for MultiDpp it uses "tmp" variables.
+  double dens_cond_in_proposal(const MatrixXd& x, double lndetCtil_prop, bool log=true);
+
+  MatrixXd compute_Ctilde_prop(const MatrixXd& means);
+
+  // GETTERS
+  const VectorXd& get_phi_tildes_tmp_red() const {return phi_tildes_tmp_red;}
+
+  const VectorXd& get_phis_tmp_red() const {return phis_tmp_red;}
+
+  double get_Ds_tmp_red() const {return Ds_tmp_red;}
+
+
+};
+
+class DeterminantalPPisotropic : public BaseDeterminantalPP {
+
+public:
+
+  // modifies the passed Ds, phis, phi_tildes, c_star according to the dpp - Lambda is not used
+  void compute_eigen_and_cstar_red(double * D_, VectorXd * Phis_, VectorXd * Phi_tildes_, double * C_star_, const MatrixXd * lambda) override;
+
 
 };
 

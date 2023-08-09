@@ -49,7 +49,7 @@ std::tuple<std::deque<py::bytes>, double , double>
   }
 
   std::deque<py::bytes> out;
-  DeterminantalPP* pp_mix = make_dpp(params, ranges);
+  BaseDeterminantalPP* pp_mix = make_dpp(params, ranges);
   BasePrec* g = make_delta(params, d);
 
   MCMCsampler::MultivariateConditionalMCMC sampler(pp_mix, g, params, d);
@@ -122,7 +122,7 @@ std::tuple<std::deque<py::bytes>, double , double>
   }
 
   std::deque<py::bytes> out;
-  DeterminantalPP* pp_mix = make_dpp(params, ranges);
+  BaseDeterminantalPP* pp_mix = make_dpp(params, ranges);
   BasePrec* g = make_delta(params, d);
 
   MCMCsampler::MultivariateConditionalMCMC sampler(pp_mix, g, params, d);
@@ -203,7 +203,7 @@ std::tuple<std::deque<py::bytes>, double , double>
   }
 
   std::deque<py::bytes> out;
-  DeterminantalPP* pp_mix = make_dpp(params, ranges);
+  BaseDeterminantalPP* pp_mix = make_dpp_isotropic(params, ranges);
   BasePrec* g = make_delta(params, d);
 
   MCMCsampler::MultivariateConditionalMCMC sampler(pp_mix, g, params, d);
@@ -276,7 +276,7 @@ std::tuple<std::deque<py::bytes>, double , double>
   }
 
   std::deque<py::bytes> out;
-  DeterminantalPP* pp_mix = make_dpp(params, ranges);
+  BaseDeterminantalPP* pp_mix = make_dpp_isotropic(params, ranges);
   BasePrec* g = make_delta(params, d);
 
   MCMCsampler::MultivariateConditionalMCMC sampler(pp_mix, g, params, d);
@@ -390,6 +390,10 @@ PYBIND11_MODULE(pp_mix_high, m) {
   m.def("_run_pp_mix", &_run_pp_mix, "aaa");
 
   m.def("_run_pp_mix_binary", &_run_pp_mix_binary, "aaa");
+
+  m.def("_run_pp_mix_isotropic", &_run_pp_mix_isotropic, "aaa");
+
+  m.def("_run_pp_mix_binary_isotropic", &_run_pp_mix_binary_isotropic, "aaa");
 
   m.def("cluster_estimate", &cluster_estimate, "aaa");
 }
