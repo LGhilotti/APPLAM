@@ -101,7 +101,7 @@ class MultivariateConditionalMCMC {
     MultivariateConditionalMCMC() {}
     ~MultivariateConditionalMCMC() ;
 
-    MultivariateConditionalMCMC(DeterminantalPP *pp_mix, BasePrec *g,
+    MultivariateConditionalMCMC(BaseDeterminantalPP *pp_mix, BasePrec *g,
                                 const Params &params, int d);
 
 
