@@ -143,7 +143,8 @@ private:
   double c_star_tmp_red;
 
 public:
-  
+  DeterminantalPP(const MatrixXd& ranges, int N, double c, double s):  BaseDeterminantalPP(ranges,N,c,s){}
+
   // modifies the passed Ds, phis, phi_tildes, c_star according to the dpp defined with lambda
   void compute_eigen_and_cstar_red(double * D_, VectorXd * Phis_, VectorXd * Phi_tildes_, double * C_star_, const MatrixXd * lambda) override;
 
@@ -172,6 +173,7 @@ public:
 class DeterminantalPPisotropic : public BaseDeterminantalPP {
 
 public:
+  DeterminantalPPisotropic(const MatrixXd& ranges, int N, double c, double s):  BaseDeterminantalPP(ranges,N,c,s){}
 
   // modifies the passed Ds, phis, phi_tildes, c_star according to the dpp - Lambda is not used
   void compute_eigen_and_cstar_red(double * D_, VectorXd * Phis_, VectorXd * Phi_tildes_, double * C_star_, const MatrixXd * lambda) override;

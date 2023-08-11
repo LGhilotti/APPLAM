@@ -4,7 +4,7 @@ SPIKES_DIR := $(SRC_DIR)/spikes
 PROTO_DIR := $(ROOT_DIR)/protos
 
 CXX = g++
-CFLAGS = \
+CFLAGS =  $(shell pkg-config --cflags protobuf) \
 	-std=c++14 \
 	-MMD \
 	-I $(STAN_ROOT_DIR) \
@@ -55,8 +55,8 @@ compile_protos:
 	@ mkdir -p $(PROTO_DIR)/cpp;
 	@ mkdir -p $(PROTO_DIR)/py;
 	@ for filename in $(PROTO_DIR)/*.proto; do \
-		protoc --proto_path=$(PROTO_DIR) --python_out=$(PROTO_DIR)/py/ $$filename; \
-		protoc --proto_path=$(PROTO_DIR) --cpp_out=$(PROTO_DIR)/cpp/ $$filename; \
+		/home/camerlenghi/applam/bin/protoc --proto_path=$(PROTO_DIR) --python_out=$(PROTO_DIR)/py/ $$filename; \
+		/home/camerlenghi/applam/bin/protoc --proto_path=$(PROTO_DIR) --cpp_out=$(PROTO_DIR)/cpp/ $$filename; \
 	done
 	@ for filename in $(PROTO_DIR)/cpp/*.cc; do \
 	    mv -- "$$filename" "$${filename%.cc}.cpp"; \

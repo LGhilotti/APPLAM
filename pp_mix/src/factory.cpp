@@ -10,7 +10,7 @@ MCMCsampler::BaseLambdaSampler* make_LambdaSampler(MCMCsampler::MultivariateCond
     if (params.step_lambda_case()==Params::StepLambdaCase::kMhSigmaLambda & typeid(*pp_mix).name() == "DeterminantalPP"){
       return new MCMCsampler::LambdaSamplerClassic(mcmc, params.mh_sigma_lambda());
     } else if (params.step_lambda_case()==Params::StepLambdaCase::kMhSigmaLambda & typeid(*pp_mix).name() == "DeterminantalPPisotropic"){
-      exit();
+      exit(1);
     } else if (params.step_lambda_case()==Params::StepLambdaCase::kMalaStepLambda & typeid(*pp_mix).name() == "DeterminantalPP"){
       return new MCMCsampler::LambdaSamplerMala(mcmc, params.mala_step_lambda());
     } else if (params.step_lambda_case()==Params::StepLambdaCase::kMalaStepLambda & typeid(*pp_mix).name() == "DeterminantalPPisotropic"){
