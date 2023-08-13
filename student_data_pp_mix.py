@@ -27,7 +27,7 @@ import sys
 sys.path.append('.')
 sys.path.append('./pp_mix')
 
-from pp_mix.interface import ConditionalMCMC, cluster_estimate
+from pp_mix.interface import ConditionalMCMC, ConditionalMCMC_isotropic, cluster_estimate
 from pp_mix.utils import loadChains, to_numpy, to_proto
 from pp_mix.protos.py.state_pb2 import MultivariateMixtureState, EigenVector, EigenMatrix
 from pp_mix.protos.py.params_pb2 import Params
@@ -39,8 +39,8 @@ np.random.seed(12345)
 ##############################################
 
 # Set hyperparameters (agreeing with Chandra)
-DEFAULT_PARAMS_FILE = "data/Student_latent_data/resources/sampler_params.asciipb"
-SPECIFIC_PARAMS_FILE = "data/Student_latent_data/resources/pars_p_{0}_d_{1}_M_{2}_npc_{3}.asciipb"
+DEFAULT_PARAMS_FILE = "data/Student_data/resources/sampler_params.asciipb"
+SPECIFIC_PARAMS_FILE = "data/Student_data/resources/pars_p_{0}_d_{1}_M_{2}_npc_{3}.asciipb"
 
 # Set the truncation level N (here called n)
 n = 3
@@ -54,7 +54,7 @@ log_ev=100
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
-    parser.add_argument("--p_values", nargs="+", default=["400"])
+    parser.add_argument("--p_values", nargs="+", default=["100", "200", "400"])
     parser.add_argument("--d_values", nargs="+", default=["2","5","8"])
     parser.add_argument("--m_values", nargs="+", default=["4"])
     parser.add_argument("--n_by_clus", nargs="+", default=["50"])
@@ -74,7 +74,7 @@ if __name__ == "__main__" :
         #######################################
         
         # read the dataset
-        with open("data/Student_latent_data/datasets/stud_p_{0}_d_{1}_M_{2}_npc_{3}_data.csv".format(p,dtrue,M,npc), newline='') as my_csv:
+        with open("data/Student_data/datasets/stud_p_{0}_d_{1}_M_{2}_npc_{3}_data.csv".format(p,dtrue,M,npc), newline='') as my_csv:
             data = pd.read_csv(my_csv, sep=',', header=None).values
             
         # scaling of data
@@ -87,7 +87,7 @@ if __name__ == "__main__" :
         #    d = int(my_file.read())
         d = dtrue
         
-        outpath_d = "data/Student_latent_data/applam/app_p_{0}_d_{1}_M_{2}_npc_{3}_out".format(p,dtrue,M,npc)
+        outpath_d = "data/Student_data/applam/app_p_{0}_d_{1}_M_{2}_npc_{3}_out".format(p,dtrue,M,npc)
         if not(os.path.exists(outpath_d)):
             os.makedirs(outpath_d)
 
@@ -96,7 +96,7 @@ if __name__ == "__main__" :
         ####################################
 
         # Set the expected number of centers a priori
-        rho_s = [20]
+        rho_s = [5,10,20]
         
         for rho in rho_s:
             
@@ -124,15 +124,15 @@ if __name__ == "__main__" :
             
             hyperpar.wishart.nu = hyperpar.wishart.nu + d
 
-            ###################################
-            ######## MCMC SAMPLER #############
-            ###################################
+            #################################################
+            ######## MCMC SAMPLER - ANISOTROPIC #############
+            #################################################
 
             # Build the sampler
-            sampler = ConditionalMCMC(hyperpar = hyperpar)
+            sampler_aniso = ConditionalMCMC(hyperpar = hyperpar)
 
             # Run the algorithm
-            sampler.run(ntrick, nburn, niter, thin, data_scaled, d, log_every = log_ev)
+            sampler_aniso.run(ntrick, nburn, niter, thin, data_scaled, d, log_every = log_ev)
 
 
             # Save results in folder
@@ -144,7 +144,7 @@ if __name__ == "__main__" :
             os.makedirs(outpath)
                 
             # Save the serialized chain produced by the sampler
-            sampler.serialize_chains(os.path.join(outpath, "chains.recordio"))
+            sampler_aniso.serialize_chains(os.path.join(outpath, "chains.recordio"))
 
 
             # save the parameters
@@ -152,54 +152,54 @@ if __name__ == "__main__" :
                 fp.write(text_format.MessageToString(hyperpar))
 
 
-            chain = sampler.chains
+            chain_aniso = sampler_aniso.chains
 
             # plots
             fig = plt.figure()
-            tau_chain = np.array([x.lamb_block.tau for x in chain])
-            plt.plot(tau_chain)
-            plt.title("tau chain")
-            plt.savefig(os.path.join(outpath, "tau_chain.pdf"))
+            tau_chain_aniso = np.array([x.lamb_block.tau for x in chain_aniso])
+            plt.plot(tau_chain_aniso)
+            plt.title("tau chain - APPLAM")
+            plt.savefig(os.path.join(outpath, "tau_chain_aniso.pdf"))
             plt.close()
 
             fig = plt.figure()
-            first_sbar_chain = np.array([to_numpy(x.sigma_bar)[0] for x in chain])
-            plt.plot(first_sbar_chain,color='red')
-            last_sbar_chain = np.array([to_numpy(x.sigma_bar)[-1] for x in chain])
-            plt.plot(last_sbar_chain,color='blue')
-            plt.title("sbar_chain")
-            plt.savefig(os.path.join(outpath, "sbar_chain.pdf"))
+            first_sbar_chain_aniso = np.array([to_numpy(x.sigma_bar)[0] for x in chain_aniso])
+            plt.plot(first_sbar_chain_aniso,color='red')
+            last_sbar_chain_aniso = np.array([to_numpy(x.sigma_bar)[-1] for x in chain_aniso])
+            plt.plot(last_sbar_chain_aniso,color='blue')
+            plt.title("sbar_chain - APPLAM")
+            plt.savefig(os.path.join(outpath, "sbar_chain_aniso.pdf"))
             plt.close()
 
             # Compute Posterior Summaries
             fig = plt.figure()
-            n_cluster_chain = np.array([x.ma for x in chain])
-            plt.plot(n_cluster_chain)
-            plt.title("number of clusters chain")
-            plt.savefig(os.path.join(outpath, "nclus_chain.pdf"))
+            n_cluster_chain_aniso = np.array([x.ma for x in chain_aniso])
+            plt.plot(n_cluster_chain_aniso)
+            plt.title("number of clusters chain - APPLAM")
+            plt.savefig(os.path.join(outpath, "nclus_chain_aniso.pdf"))
             plt.close()
 
-            fig = plt.figure()
-            n_nonall_chain = np.array([x.mna for x in chain])
-            plt.plot(n_nonall_chain)
-            plt.title("number of non allocated components chain")
-            plt.savefig(os.path.join(outpath, "non_alloc_chain.pdf"))
-            plt.close()
+            #fig = plt.figure()
+            n_nonall_chain_aniso = np.array([x.mna for x in chain_aniso])
+            #plt.plot(n_nonall_chain)
+            #plt.title("number of non allocated components chain")
+            #plt.savefig(os.path.join(outpath, "non_alloc_chain.pdf"))
+            #plt.close()
 
-            post_mode_nclus = mode(n_cluster_chain)[0][0] # store in dataframe
-            post_avg_nclus = n_cluster_chain.mean() # store in dataframe
-            post_avg_nonall =  n_nonall_chain.mean() # store in dataframe
+            post_mode_nclus_aniso = mode(n_cluster_chain_aniso)[0][0] # store in dataframe
+            post_avg_nclus_aniso = n_cluster_chain_aniso.mean() # store in dataframe
+            post_avg_nonall_aniso =  n_nonall_chain_aniso.mean() # store in dataframe
 
-            clus_alloc_chain = [x.clus_alloc for x in chain]
-            best_clus = cluster_estimate(np.array(clus_alloc_chain))
-            np.savetxt(os.path.join(outpath, "best_clus.txt"), best_clus)
+            clus_alloc_chain_aniso = [x.clus_alloc for x in chain_aniso]
+            best_clus_aniso = cluster_estimate(np.array(clus_alloc_chain_aniso))
+            np.savetxt(os.path.join(outpath, "best_clus_aniso.txt"), best_clus_aniso)
 
-            n_clus_best_clus = np.size(np.unique(best_clus))
+            n_clus_best_clus_aniso = np.size(np.unique(best_clus_aniso))
             true_clus = np.repeat(range(M),npc)
-            ari_best_clus = adjusted_rand_score(true_clus, best_clus) # store in dataframe
-            aris_chain = np.array([adjusted_rand_score(true_clus, x) for x in clus_alloc_chain])
-            mean_aris, sigma_aris = np.mean(aris_chain), np.std(aris_chain) # store mean_aris in dataframe
-            CI_aris = norm.interval(0.95, loc=mean_aris, scale=sigma_aris/sqrt(len(aris_chain))) # store in dataframe
+            ari_best_clus_aniso = adjusted_rand_score(true_clus, best_clus_aniso) # store in dataframe
+            aris_chain_aniso = np.array([adjusted_rand_score(true_clus, x) for x in clus_alloc_chain_aniso])
+            mean_aris_aniso, sigma_aris_aniso = np.mean(aris_chain_aniso), np.std(aris_chain_aniso) # store mean_aris in dataframe
+            CI_aris_aniso = norm.interval(0.95, loc=mean_aris_aniso, scale=sigma_aris_aniso/sqrt(len(aris_chain_aniso))) # store in dataframe
             list_performance = list()
             list_performance.append([p,dtrue,d,M,npc,sampler.means_ar, sampler.lambda_ar, rho, post_mode_nclus,
                                 post_avg_nclus, post_avg_nonall, ari_best_clus, CI_aris])

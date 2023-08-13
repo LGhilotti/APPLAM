@@ -51,6 +51,7 @@ public:
 
 class LambdaSamplerClassic : public BaseLambdaSampler {
 private:
+    DeterminantalPP* pp_mix_local;
     double prop_lambda_sigma;
 
      // for update of Lambda!
@@ -64,7 +65,7 @@ public:
 
 class LambdaSamplerMala : public BaseLambdaSampler {
 private:
-    DeterminantalPP* pp_mix_mala;
+    DeterminantalPP* pp_mix_local;
     double mala_p_lambda;
 
     double compute_ln_dens_analytic(const MatrixXd& lamb, double);
@@ -74,7 +75,7 @@ private:
     MatrixXd compute_gr_an(const MatrixXd& lamb, const MatrixXd& Ctilde, const VectorXd& Phis, double Ds);
 public:
     LambdaSamplerMala(MultivariateConditionalMCMC* mcmc, double m_p):
-    BaseLambdaSampler(mcmc), mala_p_lambda(m_p), pp_mix_mala(dynamic_cast<DeterminantalPP *>(mcmc->pp_mix)), lambda_tar_fun(*mcmc){}
+    BaseLambdaSampler(mcmc), mala_p_lambda(m_p), pp_mix_local(dynamic_cast<DeterminantalPP *>(mcmc->pp_mix)), lambda_tar_fun(*mcmc){}
 
     void perform(MatrixXd& Ctilde) override;
 
@@ -95,7 +96,7 @@ public:
 
 class LambdaSamplerMalaisotropic : public BaseLambdaSampler {
 private:
-    DeterminantalPPisotropic* pp_mix_mala;
+    DeterminantalPPisotropic* pp_mix_local;
     double mala_p_lambda;
 
     double compute_ln_dens_analytic(const MatrixXd& lamb);
@@ -105,7 +106,7 @@ private:
     MatrixXd compute_gr_an(const MatrixXd& lamb);
 public:
     LambdaSamplerMalaisotropic(MultivariateConditionalMCMC* mcmc, double m_p):
-    BaseLambdaSampler(mcmc), mala_p_lambda(m_p), pp_mix_mala(dynamic_cast<DeterminantalPPisotropic *>(mcmc->pp_mix)) {}
+    BaseLambdaSampler(mcmc), mala_p_lambda(m_p), pp_mix_local(dynamic_cast<DeterminantalPPisotropic *>(mcmc->pp_mix)) {}
 
     void perform(MatrixXd& Ctilde) override;
 

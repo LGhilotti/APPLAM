@@ -1,4 +1,4 @@
-#include "BaseDeterminantalPP.hpp"
+#include "determinantalPP.hpp"
 
 #include <numeric>
 
@@ -24,9 +24,7 @@ BaseDeterminantalPP::BaseDeterminantalPP(const MatrixXd &ranges, int N, double c
 
   phis_red.resize(Kappas_red.rows());
   phi_tildes_red.resize(Kappas_red.rows());
-  phis_tmp_red.resize(Kappas_red.rows());
-  phi_tildes_tmp_red.resize(Kappas_red.rows());
-
+  
   /*
   std::cout << "ranges: "<<this->ranges<<std::endl;
   std::cout << "N: "<<this->N<<std::endl;

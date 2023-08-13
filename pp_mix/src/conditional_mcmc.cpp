@@ -1044,6 +1044,7 @@ double MultivariateConditionalMCMC::Lambda_acceptance_rate() {
       return sample_lambda->Lambda_acc_rate();
 }
 
+/*
 double MultivariateConditionalMCMC::get_ln_dens_ad() {
       return sample_lambda->get_ln_dens_ad();
 }
@@ -1059,6 +1060,7 @@ const MatrixXd& MultivariateConditionalMCMC::get_grad_log_ad() {
 const MatrixXd& MultivariateConditionalMCMC::get_grad_log_analytic() {
       return sample_lambda->get_grad_log_analytic();
 }
+*/
 
 void MultivariateConditionalMCMC::print_data_by_clus(int clus) {
   for (const int &d : obs_by_clus[clus])
