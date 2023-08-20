@@ -47,7 +47,7 @@ n = 3
 
 # Set sampler parameters
 ntrick =1000
-nburn=2000
+nburn=5000
 niter = 4000
 thin= 5
 log_ev=100
@@ -221,10 +221,10 @@ if __name__ == "__main__" :
             #################################################
 
             # Build the sampler
-            sample_iso = ConditionalMCMC_isotropic(hyperpar = hyperpar)
+            sampler_iso = ConditionalMCMC_isotropic(hyperpar = hyperpar)
 
             # Run the algorithm
-            sample_iso.run(ntrick, nburn, niter, thin, data_scaled, d, log_every = log_ev)
+            sampler_iso.run(ntrick, nburn, niter, thin, data_scaled, d, log_every = log_ev)
 
 
             # Save results in the following path
@@ -236,14 +236,14 @@ if __name__ == "__main__" :
             os.makedirs(outpath)
 
             # Save the serialized chain produced by the sampler
-            sample_iso.serialize_chains(os.path.join(outpath, "chains_iso.recordio"))
+            sampler_iso.serialize_chains(os.path.join(outpath, "chains_iso.recordio"))
 
             # Save the parameters
             with open(os.path.join(outpath, "params_iso.asciipb"), 'w') as fp:
                 fp.write(text_format.MessageToString(hyperpar))
 
             # Some plots
-            chain_iso = sample_iso.chains
+            chain_iso = sampler_iso.chains
 
             # Mixing of tau parameter
             fig = plt.figure()

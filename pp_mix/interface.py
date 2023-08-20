@@ -110,7 +110,7 @@ class ConditionalMCMC_isotropic(object):
         check_params(self.params, data, d)
 
         if ranges == 0 :
-            ranges = compute_ranges_isotropic(self.params, data, d);
+            ranges = compute_ranges(self.params, data, d);
         else:
             check_ranges(ranges, d)
 
