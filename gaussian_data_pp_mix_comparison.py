@@ -21,6 +21,7 @@ from scipy.stats import norm, mode
 from scipy.interpolate import griddata
 from sklearn.metrics import adjusted_rand_score
 from math import sqrt
+import math
 from itertools import product
 
 import sys
@@ -28,11 +29,12 @@ sys.path.append('.')
 sys.path.append('./pp_mix')
 
 from pp_mix.interface import ConditionalMCMC, ConditionalMCMC_isotropic, cluster_estimate
+from pp_mix.params_helper import compute_ranges
 from pp_mix.utils import loadChains, to_numpy, to_proto
 from pp_mix.protos.py.state_pb2 import MultivariateMixtureState, EigenVector, EigenMatrix
 from pp_mix.protos.py.params_pb2 import Params
 
-np.random.seed(123456)
+np.random.seed(12345)
 
 ##############################################
 # COMMON QUANTITIES TO ALL RUNS OF ALGORITHM #
@@ -56,7 +58,7 @@ if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("--p_values", nargs="+", default=["10", "100", "200"])
     parser.add_argument("--d_values", nargs="+", default=["2"])
-    parser.add_argument("--m_values", nargs="+", default=["4"])
+    parser.add_argument("--m_values", nargs="+", default=["10"])
     parser.add_argument("--n_by_clus", nargs="+", default=["50"])
     args = parser.parse_args()
 
@@ -98,9 +100,10 @@ if __name__ == "__main__" :
           ####################################
           ##### HYPERPARAMETERS ##############
           ####################################
-
+          
+          
           # Set the expected number of centers a priori
-          rho_s = [5,10,20]
+          rho_s = [20, 50, 60]
 
           for rho in rho_s:
 
@@ -112,13 +115,14 @@ if __name__ == "__main__" :
 
               hyperpar = Params()
               params_file = SPECIFIC_PARAMS_FILE.format(p,d,dtrue,M,npc)
-              if os.path.exists(params_file):
-                  print("Using dataset-specific params file for "
+              #if os.path.exists(params_file):
+              #    print("Using dataset-specific params file for "
+              #          "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,dtrue,M,npc))
+              #else:
+              print("Using default params file for "
                         "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,dtrue,M,npc))
-              else:
-                  print("Using default params file for "
-                        "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,dtrue,M,npc))
-                  params_file = DEFAULT_PARAMS_FILE
+              params_file = DEFAULT_PARAMS_FILE
+              
               with open(params_file, 'r') as fp:
                   text_format.Parse(fp.read(), hyperpar)
 
@@ -131,12 +135,15 @@ if __name__ == "__main__" :
               #################################################
               ######## MCMC SAMPLER - APPLAM #############
               #################################################
-
+              
+              # ranges
+              ranges = compute_ranges(hyperpar, data_scaled, d)
+              
               # Build the sampler
               sampler_aniso = ConditionalMCMC(hyperpar = hyperpar)
 
               # Run the algorithm
-              sampler_aniso.run(ntrick, nburn, niter, thin, data_scaled, d, log_every = log_ev)
+              sampler_aniso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, log_every = log_ev)
 
 
               # Save results in the following path
@@ -197,7 +204,7 @@ if __name__ == "__main__" :
               sampler_iso = ConditionalMCMC_isotropic(hyperpar = hyperpar)
 
               # Run the algorithm
-              sampler_iso.run(ntrick, nburn, niter, thin, data_scaled, d, log_every = log_ev)
+              sampler_iso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, log_every = log_ev)
 
 
               # Save results in the following path

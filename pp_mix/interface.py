@@ -2,6 +2,7 @@ import logging
 import joblib
 import os
 import sys
+import math
 import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
 from google.protobuf import text_format
@@ -34,11 +35,11 @@ class ConditionalMCMC(object):
         self.params = hyperpar
         self.serialized_params = self.params.SerializeToString()
 
-    def run(self, ntrick, nburn, niter, thin, data, d, ranges = 0, log_every=200):
+    def run(self, ntrick, nburn, niter, thin, data, d, ranges = -1, log_every=200):
 
         check_params(self.params, data, d)
 
-        if ranges == 0 :
+        if np.max(ranges) == -1:
             ranges = compute_ranges(self.params, data, d);
         else:
             check_ranges(ranges, d)
@@ -105,11 +106,11 @@ class ConditionalMCMC_isotropic(object):
         self.params = hyperpar
         self.serialized_params = self.params.SerializeToString()
 
-    def run(self, ntrick, nburn, niter, thin, data, d, ranges = 0, log_every=200):
+    def run(self, ntrick, nburn, niter, thin, data, d, ranges = -1, log_every=200):
 
         check_params(self.params, data, d)
 
-        if ranges == 0 :
+        if np.max(ranges) == -1:
             ranges = compute_ranges(self.params, data, d);
         else:
             check_ranges(ranges, d)
