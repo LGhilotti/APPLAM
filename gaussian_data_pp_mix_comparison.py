@@ -32,15 +32,15 @@ from pp_mix.utils import loadChains, to_numpy, to_proto
 from pp_mix.protos.py.state_pb2 import MultivariateMixtureState, EigenVector, EigenMatrix
 from pp_mix.protos.py.params_pb2 import Params
 
-np.random.seed(12345)
+np.random.seed(123456)
 
 ##############################################
 # COMMON QUANTITIES TO ALL RUNS OF ALGORITHM #
 ##############################################
 
 # Set hyperparameters (agreeing with Chandra)
-DEFAULT_PARAMS_FILE = "data/Student_data/resources/sampler_params.asciipb"
-SPECIFIC_PARAMS_FILE = "data/Student_data/resources/comp_pars_p_{0}_d_{1}_dtrue_{2}_M_{3}_npc_{4}.asciipb"
+DEFAULT_PARAMS_FILE = "data/Gaussian_data/resources/sampler_params.asciipb"
+SPECIFIC_PARAMS_FILE = "data/Gaussian_data/resources/comp_pars_p_{0}_d_{1}_dtrue_{2}_M_{3}_npc_{4}.asciipb"
 
 # Set the truncation level N (here called n)
 n = 3
@@ -54,7 +54,7 @@ log_ev=100
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
-    parser.add_argument("--p_values", nargs="+", default=["400", "800", "1500"])
+    parser.add_argument("--p_values", nargs="+", default=["10", "100", "200"])
     parser.add_argument("--d_values", nargs="+", default=["2"])
     parser.add_argument("--m_values", nargs="+", default=["4"])
     parser.add_argument("--n_by_clus", nargs="+", default=["50"])
@@ -66,17 +66,19 @@ if __name__ == "__main__" :
     n_percluster_s = list(map(int, args.n_by_clus))
 
 
-    list_performance = list()
+
 
     # Outer cycle for reading the different datasets and perform the estimation
     for p,dtrue,M,npc in product(p_s, d_s, M_s, n_percluster_s):
+
+        list_performance = list()
 
         #######################################
         ### READ DATA AND PRE-PROCESSING ######
         #######################################
 
         # read the dataset
-        with open("data/Student_data/datasets/stud_p_{0}_d_{1}_M_{2}_npc_{3}_data.csv".format(p,dtrue,M,npc), newline='') as my_csv:
+        with open("data/Gaussian_data/datasets/gauss_p_{0}_d_{1}_M_{2}_npc_{3}_data.csv".format(p,dtrue,M,npc), newline='') as my_csv:
             data = pd.read_csv(my_csv, sep=',', header=None).values
 
         # scaling of data
@@ -89,7 +91,7 @@ if __name__ == "__main__" :
 
         for d in d_s:
 
-          outpath_d = "data/Student_data/applam/comp_app_p_{0}_d_{1}_dtrue_{2}_M_{3}_npc_{4}_out".format(p,d,dtrue,M,npc)
+          outpath_d = "data/Gaussian_data/applam/comp_app_p_{0}_d_{1}_dtrue_{2}_M_{3}_npc_{4}_out".format(p,d,dtrue,M,npc)
           if not(os.path.exists(outpath_d)):
               os.makedirs(outpath_d)
 
@@ -109,13 +111,13 @@ if __name__ == "__main__" :
               c = rho_max * ((2. * np.pi) ** (float(d)/2))
 
               hyperpar = Params()
-              params_file = SPECIFIC_PARAMS_FILE.format(p,dtrue,M,npc)
+              params_file = SPECIFIC_PARAMS_FILE.format(p,d,dtrue,M,npc)
               if os.path.exists(params_file):
                   print("Using dataset-specific params file for "
-                        "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,dtrue,M,npc))
+                        "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,dtrue,M,npc))
               else:
                   print("Using default params file for "
-                        "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,dtrue,M,npc))
+                        "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,dtrue,M,npc))
                   params_file = DEFAULT_PARAMS_FILE
               with open(params_file, 'r') as fp:
                   text_format.Parse(fp.read(), hyperpar)
@@ -146,7 +148,7 @@ if __name__ == "__main__" :
               os.makedirs(outpath)
 
               # Save the serialized chain produced by the sampler
-              sampler_aniso.serialize_chains(os.path.join(outpath, "chains_aniso.recordio"))
+              #sampler_aniso.serialize_chains(os.path.join(outpath, "chains_aniso.recordio"))
 
               # Save the parameters
               with open(os.path.join(outpath, "params_aniso.asciipb"), 'w') as fp:
@@ -154,9 +156,10 @@ if __name__ == "__main__" :
 
               # Some plots
               chain_aniso = sampler_aniso.chains
-        
+
               n_cluster_chain_aniso = np.array([x.ma for x in chain_aniso])
 
+              n_nonall_chain_aniso = np.array([x.mna for x in chain_aniso])
 
               ##################################################################
               ####### Compute quantities for summarizing performance - APPLAM ###########
@@ -206,7 +209,7 @@ if __name__ == "__main__" :
               os.makedirs(outpath)
 
               # Save the serialized chain produced by the sampler
-              sampler_iso.serialize_chains(os.path.join(outpath, "chains_iso.recordio"))
+              #sampler_iso.serialize_chains(os.path.join(outpath, "chains_iso.recordio"))
 
               # Save the parameters
               with open(os.path.join(outpath, "params_iso.asciipb"), 'w') as fp:
@@ -217,6 +220,8 @@ if __name__ == "__main__" :
 
               n_cluster_chain_iso = np.array([x.ma for x in chain_iso])
 
+
+              n_nonall_chain_iso = np.array([x.mna for x in chain_iso])
 
               ##################################################################
               ####### Compute quantities for summarizing performance ###########
@@ -259,6 +264,6 @@ if __name__ == "__main__" :
 
 
 
-    df_performance = pd.DataFrame(list_performance, columns=('model', 'p','dtrue','d','M','npc','means_ar','lambda_ar', 'intensity',
-                                        'mode_nclus', 'avg_nclus', 'avg_nonalloc', 'ari_best_clus', 'CI_aris'))
-    df_performance.to_csv(os.path.join(outpath, "df_performance.csv"))
+          df_performance = pd.DataFrame(list_performance, columns=('model', 'p','dtrue','d','M','npc','means_ar','lambda_ar', 'intensity',
+                                              'mode_nclus', 'avg_nclus', 'avg_nonalloc', 'ari_best_clus', 'CI_aris'))
+          df_performance.to_csv(os.path.join(outpath, "df_performance.csv"))
