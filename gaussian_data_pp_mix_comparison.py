@@ -42,7 +42,7 @@ np.random.seed(12345)
 
 # Set hyperparameters (agreeing with Chandra)
 DEFAULT_PARAMS_FILE = "data/Gaussian_data/resources/sampler_params.asciipb"
-SPECIFIC_PARAMS_FILE = "data/Gaussian_data/resources/comp_pars_p_{0}_d_{1}_dtrue_{2}_M_{3}_npc_{4}.asciipb"
+SPECIFIC_PARAMS_FILE = "data/Gaussian_data/resources/comp_pars_p_{0}_d_{1}_M_{2}_npc_{3}.asciipb"
 
 # Set the truncation level N (here called n)
 n = 3
@@ -56,9 +56,9 @@ log_ev=100
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
-    parser.add_argument("--p_values", nargs="+", default=["10", "100", "200"])
-    parser.add_argument("--d_values", nargs="+", default=["2"])
-    parser.add_argument("--m_values", nargs="+", default=["10"])
+    parser.add_argument("--p_values", nargs="+", default=["10", "15", "20"])
+    parser.add_argument("--d_values", nargs="+", default=["2","3"])
+    parser.add_argument("--m_values", nargs="+", default=["6"])
     parser.add_argument("--n_by_clus", nargs="+", default=["50"])
     args = parser.parse_args()
 
@@ -100,10 +100,10 @@ if __name__ == "__main__" :
           ####################################
           ##### HYPERPARAMETERS ##############
           ####################################
-          
-          
+
+
           # Set the expected number of centers a priori
-          rho_s = [20, 50, 60]
+          rho_s = [10, 20, 30]
 
           for rho in rho_s:
 
@@ -122,7 +122,7 @@ if __name__ == "__main__" :
               print("Using default params file for "
                         "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,dtrue,M,npc))
               params_file = DEFAULT_PARAMS_FILE
-              
+
               with open(params_file, 'r') as fp:
                   text_format.Parse(fp.read(), hyperpar)
 
@@ -135,10 +135,10 @@ if __name__ == "__main__" :
               #################################################
               ######## MCMC SAMPLER - APPLAM #############
               #################################################
-              
+
               # ranges
               ranges = compute_ranges(hyperpar, data_scaled, d)
-              
+
               # Build the sampler
               sampler_aniso = ConditionalMCMC(hyperpar = hyperpar)
 
