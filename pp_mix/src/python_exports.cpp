@@ -48,21 +48,19 @@ std::tuple<std::deque<py::bytes>, double , double>
     ranges = to_eigen(ranges_proto);
   }
   py::print("block 1");
-  
+
   std::deque<py::bytes> out;
   BaseDeterminantalPP* pp_mix = make_dpp(params, ranges);
   py::print("block 2");
-  
+
   BasePrec* g = make_delta(params, d);
 
   MCMCsampler::MultivariateConditionalMCMC sampler(pp_mix, g, params, d);
   py::print("block 3");
-  sampler.initialize(data);
-  py::print("block 4");
-
   Eigen::VectorXi init_allocs_ = Eigen::Map<Eigen::VectorXi>(init_allocs.data(), init_allocs.size());
-  sampler.set_clus_alloc(init_allocs_);
-  sampler._relabel();
+  sampler.initialize(data, init_allocs_);
+  /*sampler.set_clus_alloc(init_allocs_);
+  sampler._relabel();*/
   py::print("Number means in trick phase: ", sampler.get_num_a_means());
 
   for (int i = 0; i < ntrick; i++) {
@@ -207,7 +205,7 @@ std::tuple<std::deque<py::bytes>, double , double>
     ranges = to_eigen(ranges_proto);
   }
   py::print("block 1");
-  
+
   std::deque<py::bytes> out;
   BaseDeterminantalPP* pp_mix = make_dpp_isotropic(params, ranges);
   py::print("block 2");
@@ -215,14 +213,12 @@ std::tuple<std::deque<py::bytes>, double , double>
 
   MCMCsampler::MultivariateConditionalMCMC sampler(pp_mix, g, params, d);
   py::print("block 3");
-  sampler.initialize(data);
-  py::print("block 4");
-  
   Eigen::VectorXi init_allocs_ = Eigen::Map<Eigen::VectorXi>(init_allocs.data(), init_allocs.size());
-  py::print("block 5");
-  sampler.set_clus_alloc(init_allocs_);
+  sampler.initialize(data, init_allocs_);
+
+  /*sampler.set_clus_alloc(init_allocs_);
   py::print("block 6");
-  sampler._relabel();
+  sampler._relabel();*/
   py::print("Number means in trick phase: ", sampler.get_num_a_means());
 
   for (int i = 0; i < ntrick; i++) {

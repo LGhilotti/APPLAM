@@ -111,15 +111,15 @@ class MultivariateConditionalMCMC {
 
     // initializes some of the members (data, dim, ndata,..) and state of sampler
     // The constructor only initialize some other members (pointers) and params field
-    void initialize(const MatrixXd& dat);
-    void initialize_binary(const MatrixXd& binary_dat);
+    void initialize(const MatrixXd& dat, const VectorXi& init_allocs_);
+    void initialize_binary(const MatrixXd& binary_dat, const VectorXi& init_allocs_);
 
     // initializes the etas, projecting the data onto Col(Lambda):
     // it is for both uni/multi factor cases, but implemented differently because of the least square systems.
     void initialize_etas(const MatrixXd &dat);
     void initialize_latent_data(const MatrixXi& binary_dat);
 
-    void initialize_allocated_means();
+    void initialize_allocated_means(const VectorXi& init_allocs_);
 
     std::vector<VectorXd> proj_inside();
     bool is_inside(const VectorXd & point);

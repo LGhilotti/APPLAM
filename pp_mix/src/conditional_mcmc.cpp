@@ -42,7 +42,7 @@ void MultivariateConditionalMCMC::set_params(const Params & p, int d){
 }
 
 
-void MultivariateConditionalMCMC::initialize(const MatrixXd& dat) {
+void MultivariateConditionalMCMC::initialize(const MatrixXd& dat, const VectorXi& init_allocs_) {
 
   this->data = dat;
   ndata = data.rows();
@@ -59,17 +59,19 @@ void MultivariateConditionalMCMC::initialize(const MatrixXd& dat) {
   // Initialize Sigma_bar
   sigma_bar = _a_gamma/_b_gamma * VectorXd::Ones(dim_data);
 
+  // Initialize cluster allocations
+  clus_alloc.resize(ndata);
+
   // Initialize etas
   initialize_etas(dat);
 
   // REP-PP BLOCK
   // Initialize the allocated means
-  initialize_allocated_means();
+  initialize_allocated_means(init_allocs_);
   //std::cout << "a_means: \n" << a_means.transpose() << std::endl;
 
   double nclus = a_means.rows();
-  // Initialize cluster allocations
-  clus_alloc.resize(ndata);
+
   // initial vector s(a) has identical element and sums to nclus/(nclus+1)
   a_jumps = VectorXd::Ones(nclus) / (nclus); // nclus+1 if consider 1 non allocated comp
 
@@ -95,6 +97,9 @@ void MultivariateConditionalMCMC::initialize(const MatrixXd& dat) {
   // initial u parameter
   u = 1.0;
 
+  clus_alloc = init_allocs_;
+  _relabel();
+
   // DECOMPOSE DPP (in MultiDpp also assign the pointer to Lambda)
   pp_mix->set_decomposition(&Lambda);
 
@@ -105,7 +110,7 @@ void MultivariateConditionalMCMC::initialize(const MatrixXd& dat) {
 }
 
 
-void MultivariateConditionalMCMC::initialize_binary(const MatrixXd& binary_dat) {
+void MultivariateConditionalMCMC::initialize_binary(const MatrixXd& binary_dat, const VectorXi& init_allocs_) {
 
   ndata = binary_dat.rows();
   dim_data = binary_dat.cols();
@@ -123,6 +128,9 @@ void MultivariateConditionalMCMC::initialize_binary(const MatrixXd& binary_dat) 
   // Initialize Sigma_bar
   sigma_bar = _a_gamma/_b_gamma * VectorXd::Ones(dim_data);
 
+  // Initialize cluster allocations
+  clus_alloc.resize(ndata);
+
   // initialize latent data
   initialize_latent_data(binary_dat);
 
@@ -131,12 +139,11 @@ void MultivariateConditionalMCMC::initialize_binary(const MatrixXd& binary_dat) 
 
   // REP-PP BLOCK
   // Initialize the allocated means
-  initialize_allocated_means();
+  initialize_allocated_means(init_allocs_);
   //std::cout << "a_means: \n" << a_means.transpose() << std::endl;
 
   double nclus = a_means.rows();
-  // Initialize cluster allocations
-  clus_alloc.resize(ndata);
+
   // initial vector s(a) has identical element and sums to nclus/(nclus+1)
   a_jumps = VectorXd::Ones(nclus) / (nclus); // nclus+1 if consider 1 non allocated comp
 
@@ -162,6 +169,9 @@ void MultivariateConditionalMCMC::initialize_binary(const MatrixXd& binary_dat) 
   // initial u parameter
   u = 1.0;
 
+  clus_alloc = init_allocs_;
+  _relabel();
+
   // DECOMPOSE DPP (in MultiDpp also assign the pointer to Lambda)
   pp_mix->set_decomposition(&Lambda);
 
@@ -177,6 +187,11 @@ void MultivariateConditionalMCMC::initialize_etas(const MatrixXd &dat) {
 
   etas = (M.solve((dat*Lambda).transpose())).transpose();
 
+  // normalize so that all the initial etas are inside the hypersquare R
+  double half_side_l = pp_mix->get_ranges()(1,0);
+  double max_etas_comp = etas.array().abs().matrix().maxCoeff();
+  etas = etas.array() / max_etas_comp * (half_side_l*0.9);
+
   return;
 
 }
@@ -190,10 +205,9 @@ void MultivariateConditionalMCMC::initialize_latent_data(const MatrixXi& binary_
 }
 
 
-void MultivariateConditionalMCMC::initialize_allocated_means() {
-  int init_n_clus = 8;
+void MultivariateConditionalMCMC::initialize_allocated_means(const VectorXi& init_allocs_) {
+  /*int init_n_clus = 8;
   std::vector<VectorXd> in = proj_inside();
-
   if (in.size() == 0){
     a_means.resize(1, dim_fact);
     a_means.row(0) = VectorXd::Zero(dim_fact);
@@ -211,7 +225,18 @@ void MultivariateConditionalMCMC::initialize_allocated_means() {
     }
   }
   //std::cout<<"alloc means: "<<a_means.rows()<<std::endl;
+  return;*/
+
+  a_means.resize(init_allocs_.maxCoeff()+1, dim_fact);
+  std::vector<int> index(ndata);
+  std::iota(index.begin(), index.end(), 0);
+  std::shuffle(index.begin(), index.begin() + ndata ,std::default_random_engine(1234) );
+  for (int i=0; i < a_means.rows(); i++) {
+    a_means.row(i) = etas.row(index[i]);
+  }
+
   return;
+
 }
 
 std::vector<VectorXd> MultivariateConditionalMCMC::proj_inside() {
