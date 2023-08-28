@@ -42,23 +42,23 @@ np.random.seed(12345)
 
 # Set hyperparameters (agreeing with Chandra)
 DEFAULT_PARAMS_FILE = "data/Gaussian_data/resources/sampler_params.asciipb"
-SPECIFIC_PARAMS_FILE = "data/Gaussian_data/resources/comp_pars_p_{0}_d_{1}_M_{2}_npc_{3}.asciipb"
+SPECIFIC_PARAMS_FILE = "data/Gaussian_data/resources/comp_pars_p_{0}_d_{1}_dtrue_{2}_M_{3}_npc_{4}.asciipb"
 
 # Set the truncation level N (here called n)
 n = 3
 
 # Set sampler parameters
 ntrick =1000
-nburn=5000
-niter = 4000
+nburn=6000
+niter = 6000
 thin= 5
 log_ev=100
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
-    parser.add_argument("--p_values", nargs="+", default=["10", "15", "20"])
-    parser.add_argument("--d_values", nargs="+", default=["2","3"])
-    parser.add_argument("--m_values", nargs="+", default=["6"])
+    parser.add_argument("--p_values", nargs="+", default=["10","100", "200"])
+    parser.add_argument("--d_values", nargs="+", default=["2"])
+    parser.add_argument("--m_values", nargs="+", default=["4"])
     parser.add_argument("--n_by_clus", nargs="+", default=["50"])
     args = parser.parse_args()
 
@@ -85,8 +85,11 @@ if __name__ == "__main__" :
 
         # scaling of data
         centering_var=stat.median(np.mean(data,0))
+        print("mean: ", centering_var)
         scaling_var=stat.median(np.std(data,0))
+        print("std: ", scaling_var)
         data_scaled=(data-centering_var)/scaling_var
+        #data_scaled= data
 
         #d = dtrue
         d_s = [4,5,6]
@@ -97,13 +100,31 @@ if __name__ == "__main__" :
           if not(os.path.exists(outpath_d)):
               os.makedirs(outpath_d)
 
+          hyperpar = Params()
+          params_file = SPECIFIC_PARAMS_FILE.format(p,d,dtrue,M,npc)
+          if os.path.exists(params_file):
+              print("Using dataset-specific params file for "
+                    "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,M,npc))
+          else:
+            print("Using default params file for "
+                    "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,M,npc))
+            params_file = DEFAULT_PARAMS_FILE
+
+          with open(params_file, 'r') as fp:
+              text_format.Parse(fp.read(), hyperpar)
+
+          
+          # ranges
+          #ranges = compute_ranges(hyperpar, data_scaled, d)
+          ranges = np.array([np.full(d,-1.),np.full(d,1.)])
+          
           ####################################
           ##### HYPERPARAMETERS ##############
           ####################################
 
 
           # Set the expected number of centers a priori
-          rho_s = [10, 20, 30]
+          rho_s = [5, 10, 20]
 
           for rho in rho_s:
 
@@ -113,32 +134,18 @@ if __name__ == "__main__" :
               rho_max = rho/s
               c = rho_max * ((2. * np.pi) ** (float(d)/2))
 
-              hyperpar = Params()
-              params_file = SPECIFIC_PARAMS_FILE.format(p,d,dtrue,M,npc)
-              #if os.path.exists(params_file):
-              #    print("Using dataset-specific params file for "
-              #          "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,dtrue,M,npc))
-              #else:
-              print("Using default params file for "
-                        "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,dtrue,M,npc))
-              params_file = DEFAULT_PARAMS_FILE
-
-              with open(params_file, 'r') as fp:
-                  text_format.Parse(fp.read(), hyperpar)
-
+              
               hyperpar.dpp.c = c
               hyperpar.dpp.n = n
               hyperpar.dpp.s = s
-
+    
               hyperpar.wishart.nu = hyperpar.wishart.nu + d
-
+          
               #################################################
               ######## MCMC SAMPLER - APPLAM #############
               #################################################
 
-              # ranges
-              ranges = compute_ranges(hyperpar, data_scaled, d)
-
+             
               # Build the sampler
               sampler_aniso = ConditionalMCMC(hyperpar = hyperpar)
 
@@ -263,14 +270,14 @@ if __name__ == "__main__" :
               #########################################################################
 
               list_performance.append(["APPLAM", p,dtrue,d,M,npc,sampler_aniso.means_ar, sampler_aniso.lambda_ar, rho, post_mode_nclus_aniso,
-                                  post_avg_nclus_aniso, post_avg_nonall_aniso, ari_best_clus_aniso, CI_aris_aniso])
+                                  post_avg_nclus_aniso, post_avg_nonall_aniso, ari_best_clus_aniso, CI_aris_aniso, ranges[0][0]])
 
               list_performance.append(["Isotropic", p,dtrue,d,M,npc,sampler_iso.means_ar, sampler_iso.lambda_ar, rho, post_mode_nclus_iso,
-                                  post_avg_nclus_iso, post_avg_nonall_iso, ari_best_clus_iso, CI_aris_iso])
+                                  post_avg_nclus_iso, post_avg_nonall_iso, ari_best_clus_iso, CI_aris_iso, ranges[0][0]])
 
 
 
 
           df_performance = pd.DataFrame(list_performance, columns=('model', 'p','dtrue','d','M','npc','means_ar','lambda_ar', 'intensity',
-                                              'mode_nclus', 'avg_nclus', 'avg_nonalloc', 'ari_best_clus', 'CI_aris'))
+                                              'mode_nclus', 'avg_nclus', 'avg_nonalloc', 'ari_best_clus', 'CI_aris', 'ranges'))
           df_performance.to_csv(os.path.join(outpath, "df_performance.csv"))

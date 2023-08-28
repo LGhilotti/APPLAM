@@ -194,7 +194,10 @@ void MultivariateConditionalMCMC::initialize_allocated_means() {
   int init_n_clus = 8;
   std::vector<VectorXd> in = proj_inside();
 
-  if (init_n_clus >= in.size()) {
+  if (in.size() == 0){
+    a_means.resize(1, dim_fact);
+    a_means.row(0) = VectorXd::Zero(dim_fact);
+  } else if (init_n_clus >= in.size()) {
     a_means.resize(in.size(), dim_fact);
     for (int i=0; i < in.size(); i++)
       a_means.row(i) = in[i].transpose();

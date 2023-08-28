@@ -44,13 +44,14 @@ class ConditionalMCMC(object):
         else:
             check_ranges(ranges, d)
 
-        #print("ranges: \n" , ranges)
 
         self.serialized_data = to_proto(data).SerializeToString()
         self.serialized_ranges = to_proto(ranges).SerializeToString()
-        km = KMeans(6)
+        km = KMeans(8)
         km.fit(data)
         allocs = km.labels_.astype(int)
+        
+        print("ranges: \n" , ranges)
 
         self._serialized_chains, self.means_ar, self.lambda_ar = pp_mix_high._run_pp_mix(
             ntrick, nburn, niter, thin, self.serialized_data, self.serialized_params,
@@ -119,9 +120,11 @@ class ConditionalMCMC_isotropic(object):
 
         self.serialized_data = to_proto(data).SerializeToString()
         self.serialized_ranges = to_proto(ranges).SerializeToString()
-        km = KMeans(6)
+        km = KMeans(8)
         km.fit(data)
         allocs = km.labels_.astype(int)
+        
+        print("ranges: \n" , ranges)
 
         self._serialized_chains, self.means_ar, self.lambda_ar = pp_mix_high._run_pp_mix_isotropic(
             ntrick, nburn, niter, thin, self.serialized_data, self.serialized_params,
