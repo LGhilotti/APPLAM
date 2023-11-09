@@ -125,8 +125,8 @@ class MultivariateConditionalMCMC {
     bool is_inside(const VectorXd & point);
 
     // it performs the whole step of updatings
-    void run_one();
-    void run_one_trick();
+    void run_one(std::string fix_sigma);
+    void run_one_trick(std::string fix_sigma);
 
     void run_one_binary();
     void run_one_trick_binary();

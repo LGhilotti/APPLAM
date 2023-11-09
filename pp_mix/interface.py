@@ -35,7 +35,7 @@ class ConditionalMCMC(object):
         self.params = hyperpar
         self.serialized_params = self.params.SerializeToString()
 
-    def run(self, ntrick, nburn, niter, thin, data, d, ranges = -1, log_every=200):
+    def run(self, ntrick, nburn, niter, thin, data, d, ranges = -1, log_every=200, fix_sigma = "FALSE" ):
 
         check_params(self.params, data, d)
 
@@ -52,12 +52,12 @@ class ConditionalMCMC(object):
         km.fit(data)
         allocs = km.labels_.astype(int)
         print("Allocs: ", allocs)
-        
+
         print("ranges: \n" , ranges)
 
         self._serialized_chains, self.means_ar, self.lambda_ar = pp_mix_high._run_pp_mix(
             ntrick, nburn, niter, thin, self.serialized_data, self.serialized_params,
-            d, self.serialized_ranges, allocs, log_every)
+            d, self.serialized_ranges, allocs, log_every, fix_sigma)
 
         objType = MultivariateMixtureState
 
@@ -109,7 +109,7 @@ class ConditionalMCMC_isotropic(object):
         self.params = hyperpar
         self.serialized_params = self.params.SerializeToString()
 
-    def run(self, ntrick, nburn, niter, thin, data, d, ranges = -1, log_every=200):
+    def run(self, ntrick, nburn, niter, thin, data, d, ranges = -1, log_every=200, fix_sigma = "FALSE"):
 
         check_params(self.params, data, d)
 
@@ -126,12 +126,12 @@ class ConditionalMCMC_isotropic(object):
         km = KMeans(10)
         km.fit(data)
         allocs = km.labels_.astype(int)
-        
+
         print("ranges: \n" , ranges)
 
         self._serialized_chains, self.means_ar, self.lambda_ar = pp_mix_high._run_pp_mix_isotropic(
             ntrick, nburn, niter, thin, self.serialized_data, self.serialized_params,
-            d, self.serialized_ranges, allocs, log_every)
+            d, self.serialized_ranges, allocs, log_every, fix_sigma)
 
         objType = MultivariateMixtureState
 

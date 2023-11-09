@@ -33,7 +33,8 @@ std::tuple<std::deque<py::bytes>, double , double>
                                   int d,
                                   std::string serialized_ranges, //const Eigen::MatrixXd &ranges,
                                   std::vector<int> init_allocs,
-				  int log_every = 200) {
+				                          int log_every = 200,
+                                  std::string fix_sigma) {
   Params params;
   params.ParseFromString(serialized_params);
   Eigen::MatrixXd data;
@@ -64,21 +65,21 @@ std::tuple<std::deque<py::bytes>, double , double>
   py::print("Number means in trick phase: ", sampler.get_num_a_means());
 
   for (int i = 0; i < ntrick; i++) {
-    sampler.run_one_trick();
+    sampler.run_one_trick(fix_sigma);
     if ((i + 1) % log_every == 0) {
       py::print("Trick, iter #", i + 1, " / ", ntrick);
     }
   }
 
   for (int i = 0; i < burnin; i++) {
-    sampler.run_one();
+    sampler.run_one(fix_sigma);
     if ((i + 1) % log_every == 0) {
       py::print("Burnin, iter #", i + 1, " / ", burnin);
     }
   }
 
   for (int i = 0; i < niter; i++) {
-    sampler.run_one();
+    sampler.run_one(fix_sigma);
     if (i % thin == 0) {
       std::string s;
       MultivariateMixtureState curr;
@@ -188,7 +189,8 @@ std::tuple<std::deque<py::bytes>, double , double>
                                   int d,
                                   std::string serialized_ranges, //const Eigen::MatrixXd &ranges,
                                   std::vector<int> init_allocs,
-				  int log_every = 200) {
+				                          int log_every = 200,
+                                  std::string fix_sigma) {
   Params params;
   params.ParseFromString(serialized_params);
   Eigen::MatrixXd data;
@@ -220,21 +222,21 @@ std::tuple<std::deque<py::bytes>, double , double>
   py::print("Number means in trick phase: ", sampler.get_num_a_means());
 
   for (int i = 0; i < ntrick; i++) {
-    sampler.run_one_trick();
+    sampler.run_one_trick(fix_sigma);
     if ((i + 1) % log_every == 0) {
       py::print("Trick, iter #", i + 1, " / ", ntrick);
     }
   }
 
   for (int i = 0; i < burnin; i++) {
-    sampler.run_one();
+    sampler.run_one(fix_sigma);
     if ((i + 1) % log_every == 0) {
       py::print("Burnin, iter #", i + 1, " / ", burnin);
     }
   }
 
   for (int i = 0; i < niter; i++) {
-    sampler.run_one();
+    sampler.run_one(fix_sigma);
     if (i % thin == 0) {
       std::string s;
       MultivariateMixtureState curr;

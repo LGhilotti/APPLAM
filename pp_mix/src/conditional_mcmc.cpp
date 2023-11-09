@@ -102,7 +102,7 @@ void MultivariateConditionalMCMC::initialize(const MatrixXd& dat, const VectorXi
 
   // TEST UPDATE RELABEL
   Ctilde = pp_mix->compute_Ctilde(get_all_means());
-  
+
   clus_alloc = init_allocs_;
   _relabel();
 
@@ -261,7 +261,7 @@ bool MultivariateConditionalMCMC::is_inside(const VectorXd & point){
   return is_in;
 }
 
-void MultivariateConditionalMCMC::run_one() {
+void MultivariateConditionalMCMC::run_one(std::string fix_sigma) {
 
   //std::cout<<"sample u"<<std::endl;
   sample_u();
@@ -307,7 +307,9 @@ void MultivariateConditionalMCMC::run_one() {
 
   // sample Sigma bar
   //std::cout << "sample etas" << std::endl;
-  sample_sigma_bar();
+  if (fix_sigma == "FALSE"){
+    sample_sigma_bar();
+  }
 
   // sample Lambda block
   sample_Psi();
@@ -322,7 +324,7 @@ void MultivariateConditionalMCMC::run_one() {
 }
 
 
-void MultivariateConditionalMCMC::run_one_trick() {
+void MultivariateConditionalMCMC::run_one_trick(std::string fix_sigma) {
 
 //  std::cout<<"sample u"<<std::endl;
   sample_u();
@@ -355,7 +357,9 @@ void MultivariateConditionalMCMC::run_one_trick() {
   sample_etas();
 
 //  std::cout<<"sample sigmabar"<<std::endl;
+if (fix_sigma == "FALSE"){
   sample_sigma_bar();
+}
 
 //  std::cout<<"sample Psi"<<std::endl;
   sample_Psi();
@@ -729,7 +733,7 @@ void MultivariateConditionalMCMC::_relabel() {
     new_na_deltas[i] = a_deltas[a2na_vec[i]];
     new_na_jumps(i) = a_jumps(a2na_vec[i]);
   }
-  
+
   // NOW TAKE CARE OF NON ACTIVE THAT BECOME ACTIVE
   std::vector<int> na2a_vec(na2a.begin(), na2a.end());
   int n_new_a = na2a_vec.size();
