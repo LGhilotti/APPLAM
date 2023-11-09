@@ -7,7 +7,7 @@ wishart {
   sigma: 20
 }
 
-a: 0.5
+a: 1.
 
 alphajump: 1.
 
@@ -17,6 +17,6 @@ agamma: 1.0
 
 bgamma: 0.3
 
-mh_sigma_means: 0.01
+mh_sigma_means: 0.02
 
-mala_step_lambda: 0.000000005
+mala_step_lambda: 0.000008

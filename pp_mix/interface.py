@@ -47,9 +47,11 @@ class ConditionalMCMC(object):
 
         self.serialized_data = to_proto(data).SerializeToString()
         self.serialized_ranges = to_proto(ranges).SerializeToString()
-        km = KMeans(8)
+        np.random.seed(123456)
+        km = KMeans(10)
         km.fit(data)
         allocs = km.labels_.astype(int)
+        print("Allocs: ", allocs)
         
         print("ranges: \n" , ranges)
 
@@ -120,7 +122,8 @@ class ConditionalMCMC_isotropic(object):
 
         self.serialized_data = to_proto(data).SerializeToString()
         self.serialized_ranges = to_proto(ranges).SerializeToString()
-        km = KMeans(8)
+        np.random.seed(123456)
+        km = KMeans(10)
         km.fit(data)
         allocs = km.labels_.astype(int)
         

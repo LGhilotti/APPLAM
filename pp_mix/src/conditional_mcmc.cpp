@@ -91,20 +91,20 @@ void MultivariateConditionalMCMC::initialize(const MatrixXd& dat, const VectorXi
 
   // initial Delta(na) (just one scalar or matrix) is the mean
   na_deltas.resize(na_means.rows());
-  /*for (int i = 0; i < na_means.rows(); i++) {
-    na_deltas[i] = g->mean();
-  }*/
+  //for (int i = 0; i < na_means.rows(); i++) {
+  //  na_deltas[i] = g->mean();
+  //}
   // initial u parameter
   u = 1.0;
-
-  clus_alloc = init_allocs_;
-  _relabel();
 
   // DECOMPOSE DPP (in MultiDpp also assign the pointer to Lambda)
   pp_mix->set_decomposition(&Lambda);
 
   // TEST UPDATE RELABEL
   Ctilde = pp_mix->compute_Ctilde(get_all_means());
+  
+  clus_alloc = init_allocs_;
+  _relabel();
 
 
 }
@@ -169,15 +169,15 @@ void MultivariateConditionalMCMC::initialize_binary(const MatrixXd& binary_dat, 
   // initial u parameter
   u = 1.0;
 
-  clus_alloc = init_allocs_;
-  _relabel();
-
   // DECOMPOSE DPP (in MultiDpp also assign the pointer to Lambda)
   pp_mix->set_decomposition(&Lambda);
 
   // TEST UPDATE RELABEL
   Ctilde = pp_mix->compute_Ctilde(get_all_means());
 
+
+  clus_alloc = init_allocs_;
+  _relabel();
 
 }
 
@@ -729,7 +729,7 @@ void MultivariateConditionalMCMC::_relabel() {
     new_na_deltas[i] = a_deltas[a2na_vec[i]];
     new_na_jumps(i) = a_jumps(a2na_vec[i]);
   }
-
+  
   // NOW TAKE CARE OF NON ACTIVE THAT BECOME ACTIVE
   std::vector<int> na2a_vec(na2a.begin(), na2a.end());
   int n_new_a = na2a_vec.size();

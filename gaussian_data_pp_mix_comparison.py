@@ -23,6 +23,7 @@ from sklearn.metrics import adjusted_rand_score
 from math import sqrt
 import math
 from itertools import product
+from sklearn.decomposition import TruncatedSVD
 
 import sys
 sys.path.append('.')
@@ -34,8 +35,47 @@ from pp_mix.utils import loadChains, to_numpy, to_proto
 from pp_mix.protos.py.state_pb2 import MultivariateMixtureState, EigenVector, EigenMatrix
 from pp_mix.protos.py.params_pb2 import Params
 
-np.random.seed(12345)
 
+##############################################
+### FUNCTIONS TO GENERATE DATA ##############
+##############################################
+def generate_etas(mus, deltas_cov, cluster_alloc):
+    np.random.seed(seed=233423)
+    out = np.vstack([[mvn.rvs(mean = mus[i,:], cov = deltas_cov) for i in cluster_alloc]])
+    return out
+
+def generate_data(Lambda, etas, sigma_bar_cov):
+    np.random.seed(seed=233423)
+    means = np.matmul(Lambda,etas.T)
+    sigma_bar_cov_mat = np.diag(sigma_bar_cov)
+    out = np.vstack([mvn.rvs(mean = means[:,i], cov = sigma_bar_cov_mat) for i in range(etas.shape[0])])
+    return out
+
+def create_lambda(p,d):
+    #if p % d != 0:
+      #  raise ValueError("Non compatible dimensions p and d: p={0}, d={1}".format(p,d))
+
+    h = math.ceil(p/d)
+    Lambda=np.zeros((p,d))
+    for i in range(d-1):
+        Lambda[i*h:i*h+h,i] = np.ones(h)
+
+    Lambda[(d-1)*h:,d-1] = np.ones(p-(d-1)*h)
+    return Lambda
+
+def create_mus(d,M,dist):
+    mus = np.zeros((M,d))
+    tot_range = (M-1)*dist
+    max_mu = tot_range/2
+    for i in range(M):
+        mus[i,:] = np.repeat(max_mu-i*dist, d)
+
+    return mus
+
+def create_cluster_alloc(n_pc,M):
+    return np.repeat(range(M),n_pc)
+    
+    
 ##############################################
 # COMMON QUANTITIES TO ALL RUNS OF ALGORITHM #
 ##############################################
@@ -49,14 +89,14 @@ n = 3
 
 # Set sampler parameters
 ntrick =1000
-nburn=6000
-niter = 6000
+nburn=5000
+niter = 8000
 thin= 5
 log_ev=100
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
-    parser.add_argument("--p_values", nargs="+", default=["10","100", "200"])
+    parser.add_argument("--p_values", nargs="+", default=["10"])
     parser.add_argument("--d_values", nargs="+", default=["2"])
     parser.add_argument("--m_values", nargs="+", default=["4"])
     parser.add_argument("--n_by_clus", nargs="+", default=["50"])
@@ -68,8 +108,8 @@ if __name__ == "__main__" :
     n_percluster_s = list(map(int, args.n_by_clus))
 
 
-
-
+    np.random.seed(123456)
+    
     # Outer cycle for reading the different datasets and perform the estimation
     for p,dtrue,M,npc in product(p_s, d_s, M_s, n_percluster_s):
 
@@ -80,8 +120,22 @@ if __name__ == "__main__" :
         #######################################
 
         # read the dataset
-        with open("data/Gaussian_data/datasets/gauss_p_{0}_d_{1}_M_{2}_npc_{3}_data.csv".format(p,dtrue,M,npc), newline='') as my_csv:
-            data = pd.read_csv(my_csv, sep=',', header=None).values
+        #with open("data/Gaussian_data/datasets/gauss_p_{0}_d_{1}_M_{2}_npc_{3}_data.csv".format(p,dtrue,M,npc), newline='') as my_csv:
+        #    data = pd.read_csv(my_csv, sep=',', header=None).values
+        
+        dist=2
+
+        sigma_bar_prec = np.repeat(1000, p)
+        sigma_bar_cov = 1/sigma_bar_prec
+        
+        lamb = create_lambda(p,dtrue)
+        delta_cov = np.eye(dtrue)*0.1
+        
+        mus = create_mus(dtrue,M,dist)
+        
+        cluster_alloc = create_cluster_alloc(npc,M)
+        etas = generate_etas(mus, delta_cov, cluster_alloc)
+        data = generate_data(lamb, etas, sigma_bar_cov)
 
         # scaling of data
         centering_var=stat.median(np.mean(data,0))
@@ -92,7 +146,7 @@ if __name__ == "__main__" :
         #data_scaled= data
 
         #d = dtrue
-        d_s = [4,5,6]
+        d_s = [4]
 
         for d in d_s:
 
@@ -102,13 +156,13 @@ if __name__ == "__main__" :
 
           hyperpar = Params()
           params_file = SPECIFIC_PARAMS_FILE.format(p,d,dtrue,M,npc)
-          if os.path.exists(params_file):
-              print("Using dataset-specific params file for "
-                    "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,M,npc))
-          else:
-            print("Using default params file for "
-                    "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,M,npc))
-            params_file = DEFAULT_PARAMS_FILE
+          #if os.path.exists(params_file):
+           #   print("Using dataset-specific params file for "
+          #          "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,M,npc))
+          #else:
+           # print("Using default params file for "
+           #         "'p'={0}, 'd'={1} 'M'={2}, 'npc'={3}".format(p,d,M,npc))
+          params_file = DEFAULT_PARAMS_FILE
 
           with open(params_file, 'r') as fp:
               text_format.Parse(fp.read(), hyperpar)
@@ -116,7 +170,7 @@ if __name__ == "__main__" :
           
           # ranges
           #ranges = compute_ranges(hyperpar, data_scaled, d)
-          ranges = np.array([np.full(d,-1.),np.full(d,1.)])
+          ranges = np.array([np.full(d,-10.),np.full(d,10.)])
           
           ####################################
           ##### HYPERPARAMETERS ##############
@@ -124,7 +178,7 @@ if __name__ == "__main__" :
 
 
           # Set the expected number of centers a priori
-          rho_s = [5, 10, 20]
+          rho_s = [10]
 
           for rho in rho_s:
 
@@ -175,6 +229,13 @@ if __name__ == "__main__" :
 
               n_nonall_chain_aniso = np.array([x.mna for x in chain_aniso])
 
+              # Chain of the number of clusters
+              fig = plt.figure()
+              plt.plot(n_cluster_chain_aniso)
+              plt.title("number of clusters chain - APPLAM")
+              plt.savefig(os.path.join(outpath, "nclus_chain_aniso.pdf"))
+              plt.close()
+              
               ##################################################################
               ####### Compute quantities for summarizing performance - APPLAM ###########
               #################################################################
@@ -237,6 +298,13 @@ if __name__ == "__main__" :
 
               n_nonall_chain_iso = np.array([x.mna for x in chain_iso])
 
+              # Chain of the number of clusters
+              fig = plt.figure()
+              plt.plot(n_cluster_chain_iso)
+              plt.title("number of clusters chain - ISO")
+              plt.savefig(os.path.join(outpath, "nclus_chain_iso.pdf"))
+              plt.close()
+              
               ##################################################################
               ####### Compute quantities for summarizing performance ###########
               #################################################################
