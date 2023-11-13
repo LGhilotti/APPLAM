@@ -123,10 +123,10 @@ DEFAULT_PARAMS_FILE_ISO = "data/Student_latent_data/resources/sampler_params_iso
 n = 3
 
 # Set sampler parameters
-ntrick =1000
-nburn=5000
-niter = 8000
-thin= 5
+ntrick =0
+nburn=0
+niter = 2000
+thin= 1
 log_ev=100
 
 ndatasets = 1
@@ -170,7 +170,7 @@ if __name__ == "__main__" :
           
           #lamb = create_lambda(p,dtrue)
           lamb = np.eye(2)
-          delta_cov = np.diag(np.array([0.1,0.001]))
+          delta_cov = np.diag(np.array([0.2,0.001]))
           
           #mus = create_mus(dtrue,M,dist)
           mus = np.zeros((M,dtrue))
@@ -248,14 +248,14 @@ if __name__ == "__main__" :
                 hyperpar_aniso.dpp.n = n
                 hyperpar_aniso.dpp.s = s
       
-                hyperpar_aniso.wishart.nu = hyperpar_aniso.wishart.nu + d
+                #hyperpar_aniso.wishart.nu = hyperpar_aniso.wishart.nu + d
                 
                 
                 hyperpar_iso.dpp.c = c
                 hyperpar_iso.dpp.n = n
                 hyperpar_iso.dpp.s = s
       
-                hyperpar_iso.wishart.nu = hyperpar_iso.wishart.nu + d
+                #hyperpar_iso.wishart.nu = hyperpar_iso.wishart.nu + d
             
                 for j in range(n_reruns):
                 
@@ -267,7 +267,7 @@ if __name__ == "__main__" :
                   sampler_aniso = ConditionalMCMC(hyperpar = hyperpar_aniso)
     
                   # Run the algorithm
-                  sampler_aniso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, log_every = log_ev)
+                  sampler_aniso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, log_every = log_ev, fix_sigma = "TRUE")
     
     
                   # Save results in the following path
@@ -293,14 +293,18 @@ if __name__ == "__main__" :
                   n_nonall_chain_aniso = np.array([x.mna for x in chain_aniso])
     
     
-                  # Mixing of the sbar parameters
+                  # Mixing of the lambda parameters
                   fig = plt.figure()
-                  first_sbar_chain_aniso = np.array([to_numpy(x.sigma_bar)[0] for x in chain_aniso])
-                  plt.plot(first_sbar_chain_aniso,color='red')
-                  last_sbar_chain_aniso = np.array([to_numpy(x.sigma_bar)[-1] for x in chain_aniso])
-                  plt.plot(last_sbar_chain_aniso,color='blue')
-                  plt.title("sbar_chain - APPLAM")
-                  plt.savefig(os.path.join(outpath_d, "sbar_chain_aniso.pdf") )
+                  first_diag_lambda_chain_aniso = np.array([to_numpy(x.lamb_block.lamb)[0,0] for x in chain_aniso])
+                  plt.plot(first_diag_lambda_chain_aniso,color='red')
+                  second_diag_lambda_chain_aniso = np.array([to_numpy(x.lamb_block.lamb)[1,1] for x in chain_aniso])
+                  plt.plot(second_diag_lambda_chain_aniso,color='blue')
+                  ud_diag_lambda_chain_aniso = np.array([to_numpy(x.lamb_block.lamb)[0,1] for x in chain_aniso])
+                  plt.plot(ud_diag_lambda_chain_aniso,color='green')
+                  ld_diag_lambda_chain_aniso = np.array([to_numpy(x.lamb_block.lamb)[1,0] for x in chain_aniso])
+                  plt.plot(ld_diag_lambda_chain_aniso,color='yellow')
+                  plt.title("lambda_chain - APPLAM")
+                  plt.savefig(os.path.join(outpath_d, "lambda_chain_aniso.pdf") )
                   plt.close()
                   
                   ##################################################################
@@ -339,7 +343,7 @@ if __name__ == "__main__" :
                   sampler_iso = ConditionalMCMC_isotropic(hyperpar = hyperpar_iso)
     
                   # Run the algorithm
-                  sampler_iso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, log_every = log_ev)
+                  sampler_iso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, log_every = log_ev, fix_sigma = "TRUE")
     
     
                   # Save results in the following path
@@ -365,14 +369,19 @@ if __name__ == "__main__" :
     
                   n_nonall_chain_iso = np.array([x.mna for x in chain_iso])
     
-                  # Mixing of the sbar parameters
+                  
+                  # Mixing of the lambda parameters
                   fig = plt.figure()
-                  first_sbar_chain_iso = np.array([to_numpy(x.sigma_bar)[0] for x in chain_iso])
-                  plt.plot(first_sbar_chain_iso,color='red')
-                  last_sbar_chain_iso = np.array([to_numpy(x.sigma_bar)[-1] for x in chain_iso])
-                  plt.plot(last_sbar_chain_iso,color='blue')
-                  plt.title("sbar_chain - ISO")
-                  plt.savefig(os.path.join(outpath_d, "sbar_chain_iso.pdf") )
+                  first_diag_lambda_chain_iso = np.array([to_numpy(x.lamb_block.lamb)[0,0] for x in chain_iso])
+                  plt.plot(first_diag_lambda_chain_iso,color='red')
+                  second_diag_lambda_chain_iso = np.array([to_numpy(x.lamb_block.lamb)[1,1] for x in chain_iso])
+                  plt.plot(second_diag_lambda_chain_iso,color='blue')
+                  ud_diag_lambda_chain_iso = np.array([to_numpy(x.lamb_block.lamb)[0,1] for x in chain_iso])
+                  plt.plot(ud_diag_lambda_chain_iso,color='green')
+                  ld_diag_lambda_chain_iso = np.array([to_numpy(x.lamb_block.lamb)[1,0] for x in chain_iso])
+                  plt.plot(ld_diag_lambda_chain_iso,color='yellow')
+                  plt.title("lambda_chain - ISO")
+                  plt.savefig(os.path.join(outpath_d, "lambda_chain_iso.pdf") )
                   plt.close()
                   
                   ##################################################################

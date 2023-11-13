@@ -34,7 +34,7 @@ std::tuple<std::deque<py::bytes>, double , double>
                                   std::string serialized_ranges, //const Eigen::MatrixXd &ranges,
                                   std::vector<int> init_allocs,
 				                          int log_every = 200,
-                                  std::string fix_sigma) {
+                                  std::string fix_sigma = "FALSE") {
   Params params;
   params.ParseFromString(serialized_params);
   Eigen::MatrixXd data;
@@ -190,7 +190,7 @@ std::tuple<std::deque<py::bytes>, double , double>
                                   std::string serialized_ranges, //const Eigen::MatrixXd &ranges,
                                   std::vector<int> init_allocs,
 				                          int log_every = 200,
-                                  std::string fix_sigma) {
+                                  std::string fix_sigma = "FALSE") {
   Params params;
   params.ParseFromString(serialized_params);
   Eigen::MatrixXd data;
