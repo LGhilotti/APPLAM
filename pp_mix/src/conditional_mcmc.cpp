@@ -787,7 +787,7 @@ void MultivariateConditionalMCMC::_relabel() {
     auto tmp_a_jumps = a_jumps;
     a_jumps = VectorXd::Zero(oldMa + new_a_means.rows());
     a_jumps.head(oldMa) = tmp_a_jumps;
-    a_means.tail(new_a_means.rows()) = new_a_jumps;
+    a_jumps.tail(new_a_means.rows()) = new_a_jumps;
 
     //a_jumps.conservativeResize(oldMa + new_a_means.rows());
     //a_jumps.segment(oldMa, new_a_means.rows()) = new_a_jumps;
@@ -808,7 +808,7 @@ void MultivariateConditionalMCMC::_relabel() {
     auto tmp_na_jumps = na_jumps;
     na_jumps = VectorXd::Zero(oldMna + new_na_means.rows());
     na_jumps.head(oldMna) = tmp_na_jumps;
-    na_means.tail(new_na_means.rows()) = new_na_jumps;
+    na_jumps.tail(new_na_means.rows()) = new_na_jumps;
 
     //na_jumps.conservativeResize(oldMna + new_na_means.rows());
     //na_jumps.segment(oldMna, new_na_means.rows()) = new_na_jumps;
