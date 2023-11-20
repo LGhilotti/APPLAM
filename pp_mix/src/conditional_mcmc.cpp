@@ -282,7 +282,7 @@ void MultivariateConditionalMCMC::run_one(std::string fix_lambda, std::string fi
   //std::cout<<"sample alloca and relabel"<<std::endl;
   // sample c | rest and reorganize the all and nall parameters, and c as well
   sample_allocations_and_relabel();
-  
+
 
 
   //std::cout<<"sample means na"<<std::endl;
@@ -332,7 +332,7 @@ void MultivariateConditionalMCMC::run_one(std::string fix_lambda, std::string fi
 
 
   // print_debug_string();
-  
+
 
   return;
 }
@@ -776,25 +776,47 @@ void MultivariateConditionalMCMC::_relabel() {
   // NOW JOIN THE STUFF TOGETHER
   if (new_a_means.rows() > 0) {
     int oldMa = a_means.rows();
-    a_means.conservativeResize(oldMa + new_a_means.rows(), dim_fact);
-    a_means.block(oldMa, 0, new_a_means.rows(), dim_fact) = new_a_means;
+    auto tmp_a_means = a_means;
+    a_means = MatrixXd::Zero(oldMa + new_a_means.rows(), dim_fact);
+    a_means.topRows(oldMa) = tmp_a_means;
+    a_means.bottomRows(new_a_means.rows()) = new_a_means;
 
-    a_jumps.conservativeResize(oldMa + new_a_means.rows());
-    a_jumps.segment(oldMa, new_a_means.rows()) = new_a_jumps;
+    //a_means.conservativeResize(oldMa + new_a_means.rows(), dim_fact);
+    //a_means.block(oldMa, 0, new_a_means.rows(), dim_fact) = new_a_means;
+
+    auto tmp_a_jumps = a_jumps;
+    a_jumps = VectorXd::Zero(oldMa + new_a_means.rows());
+    a_jumps.head(oldMa) = tmp_a_jumps;
+    a_means.tail(new_a_means.rows()) = new_a_jumps;
+
+    //a_jumps.conservativeResize(oldMa + new_a_means.rows());
+    //a_jumps.segment(oldMa, new_a_means.rows()) = new_a_jumps;
 
     for (const auto &prec : new_a_deltas) a_deltas.push_back(prec);
   }
 
   if (new_na_means.rows() > 0) {
     int oldMna = na_means.rows();
-    na_means.conservativeResize(oldMna + new_na_means.rows(), dim_fact);
-    na_means.block(oldMna, 0, new_na_means.rows(), dim_fact) = new_na_means;
+    auto tmp_na_means = na_means;
+    na_means = MatrixXd::Zero(oldMna + new_na_means.rows(), dim_fact);
+    na_means.topRows(oldMna) = tmp_na_means;
+    na_means.bottomRows(new_na_means.rows()) = new_na_means;
 
-    na_jumps.conservativeResize(oldMna + new_na_means.rows());
-    na_jumps.segment(oldMna, new_na_means.rows()) = new_na_jumps;
+    //na_means.conservativeResize(oldMna + new_na_means.rows(), dim_fact);
+    //na_means.block(oldMna, 0, new_na_means.rows(), dim_fact) = new_na_means;
+
+    auto tmp_na_jumps = na_jumps;
+    na_jumps = VectorXd::Zero(oldMna + new_na_means.rows());
+    na_jumps.head(oldMna) = tmp_na_jumps;
+    na_means.tail(new_na_means.rows()) = new_na_jumps;
+
+    //na_jumps.conservativeResize(oldMna + new_na_means.rows());
+    //na_jumps.segment(oldMna, new_na_means.rows()) = new_na_jumps;
+
+    for (const auto &prec : new_na_deltas) na_deltas.push_back(prec);
+
   }
 
-  for (const auto &prec : new_na_deltas) na_deltas.push_back(prec);
 
   // BUILD THE VECTOR OF PERMUTATION
 
