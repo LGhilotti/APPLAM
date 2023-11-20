@@ -21,6 +21,7 @@ LDLIBS = \
 LDFLAGS = -D_REENTRANT -O3 -fopenmp
 
 PROTO_SRCS = $(wildcard $(PROTO_DIR)/cpp/*.cpp)
+SPIKES_SRCS = $(SPIKES_DIR)/main.cpp
 
 OUR_SRCS = $(wildcard $(SRC_DIR)/*.cpp) \
 		   $(wildcard $(SRC_DIR)/precs/*.cpp) \
@@ -32,6 +33,9 @@ SRCS = $(PROTO_SRCS) $(OUR_SRCS)
 OBJS = $(subst .cpp,.o, $(SRCS))
 DEPENDS := $(patsubst %.cpp,%.d,$(SRCS))
 
+SPIKES_EXECS = $(subst .cpp,.out, $(SPIKES_SRCS))
+SPIKES_OBJS =  $(subst .cpp,.o, $(SPIKES_SRCS))
+
 all: generate_pybind
 
 generate_pybind: $(OBJS)
@@ -40,6 +44,11 @@ generate_pybind: $(OBJS)
 		pp_mix_high`python3-config --extension-suffix` \
 		$(OBJS) $(LDLIBS) -fopenmp
 
+test: $(SPIKES_EXECS)
+
+$(SPIKES_EXECS): %.out: %.o $(OBJS)
+				$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJS) $< $(LDLIBS)
+
 -include $(DEPENDS)
 
 %.o : %.cpp
@@ -47,7 +56,7 @@ generate_pybind: $(OBJS)
 	-MMD -MP -c $< -o $@
 
 clean:
-	rm $(OBJS) $(DEPENDS)
+	rm $(SPIKES_OBJS) $(OBJS) $(DEPENDS)
 
 distclean: clean
 
