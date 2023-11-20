@@ -34,11 +34,14 @@ std::tuple<std::deque<py::bytes>, double , double>
                                   std::string serialized_ranges, //const Eigen::MatrixXd &ranges,
                                   std::vector<int> init_allocs,
 				                          int log_every = 200,
+                                  std::string serialized_lamb,
+                                  std::string fix_lambda,
                                   std::string fix_sigma) {
   Params params;
   params.ParseFromString(serialized_params);
   Eigen::MatrixXd data;
   Eigen::MatrixXd ranges;
+  Eigen::MatrixXd lamb;
 
   {
     EigenMatrix data_proto;
@@ -47,6 +50,9 @@ std::tuple<std::deque<py::bytes>, double , double>
     EigenMatrix ranges_proto;
     ranges_proto.ParseFromString(serialized_ranges);
     ranges = to_eigen(ranges_proto);
+    EigenMatrix lamb_proto;
+    lamb_proto.ParseFromString(serialized_lamb);
+    lamb = to_eigen(lamb_proto);
   }
   py::print("block 1");
 
@@ -59,27 +65,27 @@ std::tuple<std::deque<py::bytes>, double , double>
   MCMCsampler::MultivariateConditionalMCMC sampler(pp_mix, g, params, d);
   py::print("block 3");
   Eigen::VectorXi init_allocs_ = Eigen::Map<Eigen::VectorXi>(init_allocs.data(), init_allocs.size());
-  sampler.initialize(data, init_allocs_);
+  sampler.initialize(data, init_allocs_, lamb);
   /*sampler.set_clus_alloc(init_allocs_);
   sampler._relabel();*/
   py::print("Number means in trick phase: ", sampler.get_num_a_means());
 
   for (int i = 0; i < ntrick; i++) {
-    sampler.run_one_trick(fix_sigma);
+    sampler.run_one_trick(fix_lambda, fix_sigma);
     if ((i + 1) % log_every == 0) {
       py::print("Trick, iter #", i + 1, " / ", ntrick);
     }
   }
 
   for (int i = 0; i < burnin; i++) {
-    sampler.run_one(fix_sigma);
+    sampler.run_one(fix_lambda, fix_sigma);
     if ((i + 1) % log_every == 0) {
       py::print("Burnin, iter #", i + 1, " / ", burnin);
     }
   }
 
   for (int i = 0; i < niter; i++) {
-    sampler.run_one(fix_sigma);
+    sampler.run_one(fix_lambda, fix_sigma);
     if (i % thin == 0) {
       std::string s;
       MultivariateMixtureState curr;

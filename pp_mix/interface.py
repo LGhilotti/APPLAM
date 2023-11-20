@@ -35,7 +35,7 @@ class ConditionalMCMC(object):
         self.params = hyperpar
         self.serialized_params = self.params.SerializeToString()
 
-    def run(self, ntrick, nburn, niter, thin, data, d, ranges = -1, log_every=200, fix_sigma = "FALSE" ):
+    def run(self, ntrick, nburn, niter, thin, data, d, ranges = -1, log_every=200, lamb = 0, fix_lambda = "FALSE",fix_sigma = "FALSE" ):
 
         check_params(self.params, data, d)
 
@@ -47,6 +47,11 @@ class ConditionalMCMC(object):
 
         self.serialized_data = to_proto(data).SerializeToString()
         self.serialized_ranges = to_proto(ranges).SerializeToString()
+        if lamb == 0:
+            lamb = np.matrix(0, data.shape[1], d)
+
+        self.serialized_lambda = to_proto(lamb).SerializeToString()
+
         np.random.seed(123456)
         km = KMeans(10)
         km.fit(data)
@@ -57,7 +62,7 @@ class ConditionalMCMC(object):
 
         self._serialized_chains, self.means_ar, self.lambda_ar = pp_mix_high._run_pp_mix(
             ntrick, nburn, niter, thin, self.serialized_data, self.serialized_params,
-            d, self.serialized_ranges, allocs, log_every, fix_sigma)
+            d, self.serialized_ranges, allocs, log_every, self.serialized_lambda, fix_lambda, fix_sigma)
 
         objType = MultivariateMixtureState
 

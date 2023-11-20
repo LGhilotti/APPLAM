@@ -37,12 +37,15 @@ void MultivariateConditionalMCMC::set_params(const Params & p, int d){
   this->_beta_jump = params.betajump();
   this->_a_gamma = params.agamma();
   this->_b_gamma = params.bgamma();
+  auto & rng = Rng::Instance().get();
+  rng.seed(params.seed_val());
 
   return;
 }
 
 
-void MultivariateConditionalMCMC::initialize(const MatrixXd& dat, const VectorXi& init_allocs_) {
+void MultivariateConditionalMCMC::initialize(const MatrixXd& dat, const VectorXi& init_allocs_,
+  const MatrixXd& lamb) {
 
   this->data = dat;
   ndata = data.rows();
@@ -53,8 +56,12 @@ void MultivariateConditionalMCMC::initialize(const MatrixXd& dat, const VectorXi
   Phi = 1.0/(dim_data*dim_fact) * MatrixXi::Ones(dim_data,dim_fact) ;
   Psi = 2.0 * MatrixXi::Ones(dim_data,dim_fact);
 
-  Lambda = Map<MatrixXd>(normal_rng( std::vector<double>(dim_data*dim_fact, 0.0),
-        std::vector<double>(dim_data*dim_fact, _a_phi * _a_phi), Rng::Instance().get() ).data() , dim_data,dim_fact );
+  if (lamb.isZero(0) ){
+    Lambda = Map<MatrixXd>(normal_rng( std::vector<double>(dim_data*dim_fact, 0.0),
+          std::vector<double>(dim_data*dim_fact, _a_phi * _a_phi), Rng::Instance().get() ).data() , dim_data,dim_fact );
+  } else {
+    Lambda = lamb;
+  }
 
   // Initialize Sigma_bar
   sigma_bar = _a_gamma/_b_gamma * VectorXd::Ones(dim_data);
@@ -261,7 +268,7 @@ bool MultivariateConditionalMCMC::is_inside(const VectorXd & point){
   return is_in;
 }
 
-void MultivariateConditionalMCMC::run_one(std::string fix_sigma) {
+void MultivariateConditionalMCMC::run_one(std::string fix_lambda, std::string fix_sigma) {
 
   //std::cout<<"sample u"<<std::endl;
   sample_u();
@@ -312,11 +319,14 @@ void MultivariateConditionalMCMC::run_one(std::string fix_sigma) {
   }
 
   // sample Lambda block
-  sample_Psi();
-  sample_tau();
-  sample_Phi();
+  if (fix_lambda == "FALSE"){
+    sample_Psi();
+    sample_tau();
+    sample_Phi();
 
-  sample_lambda->perform(Ctilde);
+    sample_lambda->perform(Ctilde);
+  }
+
 
   // print_debug_string();
 
@@ -324,7 +334,7 @@ void MultivariateConditionalMCMC::run_one(std::string fix_sigma) {
 }
 
 
-void MultivariateConditionalMCMC::run_one_trick(std::string fix_sigma) {
+void MultivariateConditionalMCMC::run_one_trick(std::string fix_lambda, std::string fix_sigma) {
 
 //  std::cout<<"sample u"<<std::endl;
   sample_u();
@@ -361,18 +371,13 @@ if (fix_sigma == "FALSE"){
   sample_sigma_bar();
 }
 
-//  std::cout<<"sample Psi"<<std::endl;
-  sample_Psi();
+if (fix_lambda == "FALSE"){
+    sample_Psi();
+    sample_tau();
+    sample_Phi();
 
-//  std::cout<<"sample tau"<<std::endl;
-  sample_tau();
-
-//  std::cout<<"sample Phi"<<std::endl;
-  sample_Phi();
-
-//  std::cout<<"before sampling Lambda"<<std::endl;
-  sample_lambda->perform(Ctilde);
- //std::cout<<"sample Lambda"<<std::endl;
+    sample_lambda->perform(Ctilde);
+  }
 
   // print_debug_string();
 

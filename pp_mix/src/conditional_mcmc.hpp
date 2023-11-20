@@ -111,7 +111,7 @@ class MultivariateConditionalMCMC {
 
     // initializes some of the members (data, dim, ndata,..) and state of sampler
     // The constructor only initialize some other members (pointers) and params field
-    void initialize(const MatrixXd& dat, const VectorXi& init_allocs_);
+    void initialize(const MatrixXd& dat, const VectorXi& init_allocs_, const MatrixXd& lamb);
     void initialize_binary(const MatrixXd& binary_dat, const VectorXi& init_allocs_);
 
     // initializes the etas, projecting the data onto Col(Lambda):
@@ -125,8 +125,8 @@ class MultivariateConditionalMCMC {
     bool is_inside(const VectorXd & point);
 
     // it performs the whole step of updatings
-    void run_one(std::string fix_sigma);
-    void run_one_trick(std::string fix_sigma);
+    void run_one(std::string fix_lambda, std::string fix_sigma);
+    void run_one_trick(std::string fix_lambda, std::string fix_sigma);
 
     void run_one_binary();
     void run_one_trick_binary();

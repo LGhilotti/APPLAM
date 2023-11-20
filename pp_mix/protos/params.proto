@@ -54,4 +54,6 @@ message Params {
         double mh_sigma_lambda = 15;
     }
 
+    double seed_val = 16;
+
 }
