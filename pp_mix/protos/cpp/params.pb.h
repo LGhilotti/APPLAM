@@ -955,6 +955,7 @@ class Params PROTOBUF_FINAL :
     kBetajumpFieldNumber = 9,
     kAgammaFieldNumber = 10,
     kBgammaFieldNumber = 11,
+    kSeedValFieldNumber = 16,
     kFixedMultiPrecFieldNumber = 2,
     kWishartFieldNumber = 3,
     kFixedUnivPrecFieldNumber = 4,
@@ -1025,6 +1026,15 @@ class Params PROTOBUF_FINAL :
   private:
   double _internal_bgamma() const;
   void _internal_set_bgamma(double value);
+  public:
+
+  // double seed_val = 16;
+  void clear_seed_val();
+  double seed_val() const;
+  void set_seed_val(double value);
+  private:
+  double _internal_seed_val() const;
+  void _internal_set_seed_val(double value);
   public:
 
   // .FixedMultiPrecParams fixed_multi_prec = 2;
@@ -1183,6 +1193,7 @@ class Params PROTOBUF_FINAL :
   double betajump_;
   double agamma_;
   double bgamma_;
+  double seed_val_;
   union PrecParamsUnion {
     PrecParamsUnion() {}
     ::FixedMultiPrecParams* fixed_multi_prec_;
@@ -2049,6 +2060,26 @@ inline double Params::mh_sigma_lambda() const {
 inline void Params::set_mh_sigma_lambda(double value) {
   _internal_set_mh_sigma_lambda(value);
   // @@protoc_insertion_point(field_set:Params.mh_sigma_lambda)
+}
+
+// double seed_val = 16;
+inline void Params::clear_seed_val() {
+  seed_val_ = 0;
+}
+inline double Params::_internal_seed_val() const {
+  return seed_val_;
+}
+inline double Params::seed_val() const {
+  // @@protoc_insertion_point(field_get:Params.seed_val)
+  return _internal_seed_val();
+}
+inline void Params::_internal_set_seed_val(double value) {
+  
+  seed_val_ = value;
+}
+inline void Params::set_seed_val(double value) {
+  _internal_set_seed_val(value);
+  // @@protoc_insertion_point(field_set:Params.seed_val)
 }
 
 inline bool Params::has_prec_params() const {

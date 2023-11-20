@@ -185,6 +185,7 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_params_2eproto::offsets[] PROT
   ::PROTOBUF_NAMESPACE_ID::internal::kInvalidFieldOffsetTag,
   ::PROTOBUF_NAMESPACE_ID::internal::kInvalidFieldOffsetTag,
   ::PROTOBUF_NAMESPACE_ID::internal::kInvalidFieldOffsetTag,
+  PROTOBUF_FIELD_OFFSET(::Params, seed_val_),
   PROTOBUF_FIELD_OFFSET(::Params, prec_params_),
   PROTOBUF_FIELD_OFFSET(::Params, step_means_),
   PROTOBUF_FIELD_OFFSET(::Params, step_lambda_),
@@ -214,7 +215,7 @@ const char descriptor_table_protodef_params_2eproto[] PROTOBUF_SECTION_VARIABLE(
   "ixedUnivPrecParams\022\r\n\005sigma\030\001 \001(\001\"*\n\013Gam"
   "maParams\022\r\n\005alpha\030\001 \001(\001\022\014\n\004beta\030\002 \001(\001\",\n"
   "\tDPPParams\022\t\n\001c\030\001 \001(\001\022\t\n\001n\030\002 \001(\005\022\t\n\001s\030\003 "
-  "\001(\001\"\264\003\n\006Params\022\027\n\003dpp\030\001 \001(\0132\n.DPPParams\022"
+  "\001(\001\"\306\003\n\006Params\022\027\n\003dpp\030\001 \001(\0132\n.DPPParams\022"
   "1\n\020fixed_multi_prec\030\002 \001(\0132\025.FixedMultiPr"
   "ecParamsH\000\022!\n\007wishart\030\003 \001(\0132\016.WishartPar"
   "amsH\000\022/\n\017fixed_univ_prec\030\004 \001(\0132\024.FixedUn"
@@ -223,9 +224,9 @@ const char descriptor_table_protodef_params_2eproto[] PROTOBUF_SECTION_VARIABLE(
   "\022\020\n\010betajump\030\t \001(\001\022\016\n\006agamma\030\n \001(\001\022\016\n\006bg"
   "amma\030\013 \001(\001\022\031\n\017mala_step_means\030\014 \001(\001H\001\022\030\n"
   "\016mh_sigma_means\030\r \001(\001H\001\022\032\n\020mala_step_lam"
-  "bda\030\016 \001(\001H\002\022\031\n\017mh_sigma_lambda\030\017 \001(\001H\002B\r"
-  "\n\013prec_paramsB\014\n\nstep_meansB\r\n\013step_lamb"
-  "dab\006proto3"
+  "bda\030\016 \001(\001H\002\022\031\n\017mh_sigma_lambda\030\017 \001(\001H\002\022\020"
+  "\n\010seed_val\030\020 \001(\001B\r\n\013prec_paramsB\014\n\nstep_"
+  "meansB\r\n\013step_lambdab\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_params_2eproto_deps[1] = {
 };
@@ -239,7 +240,7 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_par
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_params_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_params_2eproto = {
-  false, false, descriptor_table_protodef_params_2eproto, "params.proto", 690,
+  false, false, descriptor_table_protodef_params_2eproto, "params.proto", 708,
   &descriptor_table_params_2eproto_once, descriptor_table_params_2eproto_sccs, descriptor_table_params_2eproto_deps, 6, 0,
   schemas, file_default_instances, TableStruct_params_2eproto::offsets,
   file_level_metadata_params_2eproto, 6, file_level_enum_descriptors_params_2eproto, file_level_service_descriptors_params_2eproto,
@@ -1457,8 +1458,8 @@ Params::Params(const Params& from)
     dpp_ = nullptr;
   }
   ::memcpy(&a_, &from.a_,
-    static_cast<size_t>(reinterpret_cast<char*>(&bgamma_) -
-    reinterpret_cast<char*>(&a_)) + sizeof(bgamma_));
+    static_cast<size_t>(reinterpret_cast<char*>(&seed_val_) -
+    reinterpret_cast<char*>(&a_)) + sizeof(seed_val_));
   clear_has_prec_params();
   switch (from.prec_params_case()) {
     case kFixedMultiPrec: {
@@ -1516,8 +1517,8 @@ void Params::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Params_params_2eproto.base);
   ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
       reinterpret_cast<char*>(&dpp_) - reinterpret_cast<char*>(this)),
-      0, static_cast<size_t>(reinterpret_cast<char*>(&bgamma_) -
-      reinterpret_cast<char*>(&dpp_)) + sizeof(bgamma_));
+      0, static_cast<size_t>(reinterpret_cast<char*>(&seed_val_) -
+      reinterpret_cast<char*>(&dpp_)) + sizeof(seed_val_));
   clear_has_prec_params();
   clear_has_step_means();
   clear_has_step_lambda();
@@ -1640,8 +1641,8 @@ void Params::Clear() {
   }
   dpp_ = nullptr;
   ::memset(&a_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&bgamma_) -
-      reinterpret_cast<char*>(&a_)) + sizeof(bgamma_));
+      reinterpret_cast<char*>(&seed_val_) -
+      reinterpret_cast<char*>(&a_)) + sizeof(seed_val_));
   clear_prec_params();
   clear_step_means();
   clear_step_lambda();
@@ -1750,6 +1751,13 @@ const char* Params::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::int
       case 15:
         if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 121)) {
           _internal_set_mh_sigma_lambda(::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr));
+          ptr += sizeof(double);
+        } else goto handle_unusual;
+        continue;
+      // double seed_val = 16;
+      case 16:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 129)) {
+          seed_val_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<double>(ptr);
           ptr += sizeof(double);
         } else goto handle_unusual;
         continue;
@@ -1875,6 +1883,12 @@ failure:
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteDoubleToArray(15, this->_internal_mh_sigma_lambda(), target);
   }
 
+  // double seed_val = 16;
+  if (!(this->seed_val() <= 0 && this->seed_val() >= 0)) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteDoubleToArray(16, this->_internal_seed_val(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1921,6 +1935,11 @@ size_t Params::ByteSizeLong() const {
   // double bgamma = 11;
   if (!(this->bgamma() <= 0 && this->bgamma() >= 0)) {
     total_size += 1 + 8;
+  }
+
+  // double seed_val = 16;
+  if (!(this->seed_val() <= 0 && this->seed_val() >= 0)) {
+    total_size += 2 + 8;
   }
 
   switch (prec_params_case()) {
@@ -2035,6 +2054,9 @@ void Params::MergeFrom(const Params& from) {
   if (!(from.bgamma() <= 0 && from.bgamma() >= 0)) {
     _internal_set_bgamma(from._internal_bgamma());
   }
+  if (!(from.seed_val() <= 0 && from.seed_val() >= 0)) {
+    _internal_set_seed_val(from._internal_seed_val());
+  }
   switch (from.prec_params_case()) {
     case kFixedMultiPrec: {
       _internal_mutable_fixed_multi_prec()->::FixedMultiPrecParams::MergeFrom(from._internal_fixed_multi_prec());
@@ -2106,8 +2128,8 @@ void Params::InternalSwap(Params* other) {
   using std::swap;
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(Params, bgamma_)
-      + sizeof(Params::bgamma_)
+      PROTOBUF_FIELD_OFFSET(Params, seed_val_)
+      + sizeof(Params::seed_val_)
       - PROTOBUF_FIELD_OFFSET(Params, dpp_)>(
           reinterpret_cast<char*>(&dpp_),
           reinterpret_cast<char*>(&other->dpp_));

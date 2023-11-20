@@ -125,7 +125,7 @@ n = 3
 # Set sampler parameters
 ntrick =0
 nburn=0
-niter = 2000
+niter = 400
 thin= 1
 log_ev=100
 
@@ -267,7 +267,7 @@ if __name__ == "__main__" :
                   sampler_aniso = ConditionalMCMC(hyperpar = hyperpar_aniso)
     
                   # Run the algorithm
-                  sampler_aniso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, log_every = log_ev, fix_sigma = "TRUE")
+                  sampler_aniso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, lamb = 0, fix_lambda = "TRUE", fix_sigma = "TRUE", log_every = log_ev)
     
     
                   # Save results in the following path
@@ -343,7 +343,7 @@ if __name__ == "__main__" :
                   sampler_iso = ConditionalMCMC_isotropic(hyperpar = hyperpar_iso)
     
                   # Run the algorithm
-                  sampler_iso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, log_every = log_ev, fix_sigma = "TRUE")
+                  sampler_iso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, lamb = 0, fix_lambda = "TRUE", fix_sigma = "TRUE", log_every = log_ev)
     
     
                   # Save results in the following path

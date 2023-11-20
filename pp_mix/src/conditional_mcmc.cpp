@@ -270,6 +270,7 @@ bool MultivariateConditionalMCMC::is_inside(const VectorXd & point){
 
 void MultivariateConditionalMCMC::run_one(std::string fix_lambda, std::string fix_sigma) {
 
+
   //std::cout<<"sample u"<<std::endl;
   sample_u();
 
@@ -281,6 +282,8 @@ void MultivariateConditionalMCMC::run_one(std::string fix_lambda, std::string fi
   //std::cout<<"sample alloca and relabel"<<std::endl;
   // sample c | rest and reorganize the all and nall parameters, and c as well
   sample_allocations_and_relabel();
+  
+
 
   //std::cout<<"sample means na"<<std::endl;
   // sample non-allocated variables
@@ -329,6 +332,7 @@ void MultivariateConditionalMCMC::run_one(std::string fix_lambda, std::string fi
 
 
   // print_debug_string();
+  
 
   return;
 }
@@ -634,7 +638,6 @@ void MultivariateConditionalMCMC::sample_allocations_and_relabel() {
   // current number of components (a + na)
   int Mtot = Ma + Mna;
 
-  // std::cout << "a_means: \n" << a_means << std::endl;
 
   const MatrixXd &curr_a_means = a_means;
   const MatrixXd &curr_na_means = na_means;
@@ -657,9 +660,10 @@ void MultivariateConditionalMCMC::sample_allocations_and_relabel() {
 
   for (int i = 0; i < ndata; i++) {
     VectorXd probas = softmax_fun(log_probas.col(i));
-    if (probas.sum() == 0)
+    if (probas.sum() == 0){
       clus_alloc[i] = categorical_rng(VectorXd::Constant(Ma + Mna,1), Rng::Instance().get()) - 1;
-    else clus_alloc[i] = categorical_rng(probas, Rng::Instance().get()) - 1;
+    }
+    else {clus_alloc[i] = categorical_rng(probas, Rng::Instance().get()) - 1;}
   }
 
   _relabel();
@@ -733,10 +737,10 @@ void MultivariateConditionalMCMC::_relabel() {
   std::vector<PrecMat> new_na_deltas(n_new_na);
   VectorXd new_na_jumps(n_new_na);
 
-  for (int i = 0; i < n_new_na; i++) {
-    new_na_means.row(i) = a_means.row(a2na_vec[i]);
-    new_na_deltas[i] = a_deltas[a2na_vec[i]];
-    new_na_jumps(i) = a_jumps(a2na_vec[i]);
+  for (int h = 0; h < n_new_na; h++) {
+    new_na_means.row(h) = a_means.row(a2na_vec[h]);
+    new_na_deltas[h] = a_deltas[a2na_vec[h]];
+    new_na_jumps(h) = a_jumps(a2na_vec[h]);
   }
 
   // NOW TAKE CARE OF NON ACTIVE THAT BECOME ACTIVE
