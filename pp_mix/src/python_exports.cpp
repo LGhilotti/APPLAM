@@ -107,10 +107,10 @@ std::tuple<std::deque<py::bytes>, double , double>
 
     if ((i + 1) % log_every == 0) {
       py::print("Running, iter #", i + 1, " / ", niter);
-      Eigen::VectorXi ca = sampler.get_clus_alloc();
+      /*Eigen::VectorXi ca = sampler.get_clus_alloc();
       for (int h=0; h< ca.size(); h++){
         py::print(ca(h));
-      }
+      }*/
     }
   }
 

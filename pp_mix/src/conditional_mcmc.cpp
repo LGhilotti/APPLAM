@@ -731,63 +731,70 @@ void MultivariateConditionalMCMC::_relabel() {
     if ((clus_alloc.array() == k).count() == 0) a2na.insert(k);
   }
 
-  std::vector<int> a2na_vec(a2na.begin(), a2na.end());
   int n_new_na = a2na.size();
+  std::vector<int> a2na_vec(a2na.begin(), a2na.end());
   MatrixXd new_na_means(n_new_na, dim_fact);
   std::vector<PrecMat> new_na_deltas(n_new_na);
   VectorXd new_na_jumps(n_new_na);
+    
+  if (n_new_na > 0){
+      
 
-  for (int h = 0; h < n_new_na; h++) {
-    new_na_means.row(h) = a_means.row(a2na_vec[h]);
-    new_na_deltas[h] = a_deltas[a2na_vec[h]];
-    new_na_jumps(h) = a_jumps(a2na_vec[h]);
+    for (int h = 0; h < n_new_na; h++) {
+      new_na_means.row(h) = a_means.row(a2na_vec[h]);
+      new_na_deltas[h] = a_deltas[a2na_vec[h]];
+      new_na_jumps(h) = a_jumps(a2na_vec[h]);
+    }
+    
+    // delete rows, backward
+    for (auto it = a2na_vec.rbegin(); it != a2na_vec.rend(); it++) {
+      delete_row(&a_means, *it);
+      delete_elem(&a_jumps, *it);
+      a_deltas.erase(a_deltas.begin() + *it);
+    }
   }
+  
 
   // NOW TAKE CARE OF NON ACTIVE THAT BECOME ACTIVE
+  int n_new_a = na2a.size();
   std::vector<int> na2a_vec(na2a.begin(), na2a.end());
-  int n_new_a = na2a_vec.size();
   MatrixXd new_a_means(n_new_a, dim_fact);
   std::vector<PrecMat> new_a_deltas(n_new_a);
   VectorXd new_a_jumps(n_new_a);
+  
+  if (n_new_a > 0){        
 
-  for (int i = 0; i < n_new_a; i++) {
-    new_a_means.row(i) = na_means.row(na2a_vec[i]);
-    new_a_deltas[i] = na_deltas[na2a_vec[i]];
-    double tmp = na_jumps(na2a_vec[i]);
-    new_a_jumps(i) = tmp;
-  }
-
-  // delete rows, backward
-  for (auto it = a2na_vec.rbegin(); it != a2na_vec.rend(); it++) {
-    delete_row(&a_means, *it);
-    delete_elem(&a_jumps, *it);
-    a_deltas.erase(a_deltas.begin() + *it);
-  }
-
-  // delete rows, backward
-  if (na_means.rows() > 0) {
+    for (int i = 0; i < n_new_a; i++) {
+      new_a_means.row(i) = na_means.row(na2a_vec[i]);
+      new_a_deltas[i] = na_deltas[na2a_vec[i]];
+      double tmp = na_jumps(na2a_vec[i]);
+      new_a_jumps(i) = tmp;
+    }
+    
+    // delete rows, backward  
     for (auto it = na2a_vec.rbegin(); it != na2a_vec.rend(); it++) {
       delete_row(&na_means, *it);
       delete_elem(&na_jumps, *it);
       na_deltas.erase(na_deltas.begin() + *it);
     }
   }
+  
 
   // NOW JOIN THE STUFF TOGETHER
-  if (new_a_means.rows() > 0) {
+  if (n_new_a > 0) {
     int oldMa = a_means.rows();
     auto tmp_a_means = a_means;
-    a_means = MatrixXd::Zero(oldMa + new_a_means.rows(), dim_fact);
+    a_means = MatrixXd::Zero(oldMa + n_new_a, dim_fact);
     a_means.topRows(oldMa) = tmp_a_means;
-    a_means.bottomRows(new_a_means.rows()) = new_a_means;
+    a_means.bottomRows(n_new_a) = new_a_means;
 
     //a_means.conservativeResize(oldMa + new_a_means.rows(), dim_fact);
     //a_means.block(oldMa, 0, new_a_means.rows(), dim_fact) = new_a_means;
 
     auto tmp_a_jumps = a_jumps;
-    a_jumps = VectorXd::Zero(oldMa + new_a_means.rows());
+    a_jumps = VectorXd::Zero(oldMa + n_new_a );
     a_jumps.head(oldMa) = tmp_a_jumps;
-    a_jumps.tail(new_a_means.rows()) = new_a_jumps;
+    a_jumps.tail(n_new_a) = new_a_jumps;
 
     //a_jumps.conservativeResize(oldMa + new_a_means.rows());
     //a_jumps.segment(oldMa, new_a_means.rows()) = new_a_jumps;
@@ -795,20 +802,20 @@ void MultivariateConditionalMCMC::_relabel() {
     for (const auto &prec : new_a_deltas) a_deltas.push_back(prec);
   }
 
-  if (new_na_means.rows() > 0) {
+  if (n_new_na > 0) {
     int oldMna = na_means.rows();
     auto tmp_na_means = na_means;
-    na_means = MatrixXd::Zero(oldMna + new_na_means.rows(), dim_fact);
+    na_means = MatrixXd::Zero(oldMna + n_new_na, dim_fact);
     na_means.topRows(oldMna) = tmp_na_means;
-    na_means.bottomRows(new_na_means.rows()) = new_na_means;
+    na_means.bottomRows(n_new_na) = new_na_means;
 
     //na_means.conservativeResize(oldMna + new_na_means.rows(), dim_fact);
     //na_means.block(oldMna, 0, new_na_means.rows(), dim_fact) = new_na_means;
 
     auto tmp_na_jumps = na_jumps;
-    na_jumps = VectorXd::Zero(oldMna + new_na_means.rows());
+    na_jumps = VectorXd::Zero(oldMna + n_new_na);
     na_jumps.head(oldMna) = tmp_na_jumps;
-    na_jumps.tail(new_na_means.rows()) = new_na_jumps;
+    na_jumps.tail(n_new_na) = new_na_jumps;
 
     //na_jumps.conservativeResize(oldMna + new_na_means.rows());
     //na_jumps.segment(oldMna, new_na_means.rows()) = new_na_jumps;
