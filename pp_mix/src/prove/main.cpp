@@ -11,11 +11,11 @@
 #include <stan/math/prim.hpp>
 #include <Eigen/Dense>
 
-#include "../../conditional_mcmc.hpp"
-#include "../../factory.hpp"
-#include "../../precs/delta_gamma.hpp"
-#include "../../precs/delta_wishart.hpp"
-#include "../../point_process/determinantalPP.hpp"
+#include "../conditional_mcmc.hpp"
+#include "../factory.hpp"
+#include "../precs/delta_gamma.hpp"
+#include "../precs/delta_wishart.hpp"
+#include "../point_process/determinantalPP.hpp"
 
 using namespace Eigen;
 using namespace stan::math;
@@ -38,50 +38,59 @@ M load_csv (const std::string & path) {
     return Map<const Matrix<typename M::Scalar, M::RowsAtCompileTime, M::ColsAtCompileTime, RowMajor>>(values.data(), rows, values.size()/rows);
 }
 
-int main{
+int main(){
 
-  MatrixXd datacsv = load_csv<MatrixXd>("../../../../data/Student_latent_data/applam/dataset.csv");
+  
+  MatrixXd datacsv = load_csv<MatrixXd>("/home/camerlenghi/applam/APPLAM/data/Student_latent_data/applam/dataset.csv");
+  
 
   std::string params_file = \
-      "../../../../data/Student_latent_data/resources/sampler_params_aniso.asciipb";
+      "/home/camerlenghi/applam/APPLAM/data/Student_latent_data/resources/sampler_params_aniso.asciipb";
   Params params = loadTextProto<Params>(params_file);
+  
+  
 
   int d = 2;
-  matrixXd ranges(2,2);
+  MatrixXd ranges(2,2);
   ranges << -6 , -6, 6, 6;
 
   BaseDeterminantalPP* pp_mix = make_dpp(params, ranges);
-
+ 
+   
+   
   BasePrec* g = make_delta(params, d);
+  
+   
 
   MCMCsampler::MultivariateConditionalMCMC sampler(pp_mix, g, params, d);
+  
+  
 
   std::vector<int> init_allocs(datacsv.rows());
   std::iota (std::begin(init_allocs), std::end(init_allocs), 0);
 
   Eigen::VectorXi init_allocs_ = Eigen::Map<Eigen::VectorXi>(init_allocs.data(), init_allocs.size());
-  MatrixX lamb = MatrixXd::Zero(datacsv.cols(), d);
+  MatrixXd lamb = MatrixXd::Zero(datacsv.cols(), d);
+
 
   sampler.initialize(datacsv, init_allocs_, lamb);
 
-  int niter= 10;
+
+
+  int niter= 2;
   int thin = 1;
   int log_every=1;
 
+  std::string fix_lambda = "TRUE";
+  std::string fix_sigma = "TRUE";
+  
   for (int i = 0; i < niter; i++) {
-    sampler.run_one(fix_lambda = "TRUE", fix_sigma = "TRUE");
-    if ((i + 1) % log_every == 0) {
-      std::cout<<"Running, iter #", i + 1, " / ", niter << std::endl;
-      std::cout<< sampler.get_clus_alloc()<< std::endl;
-
-      /*Eigen::VectorXi ca = sampler.get_clus_alloc();
-      for (int h=0; h< ca.size(); h++){
-        py::print(ca(h));
-      }*/
-    }
+    
+    std::cout<<"Running, iter #" << i + 1 << " / " << niter << std::endl;
+    sampler.sample_allocations_and_relabel();
   }
 
-  std::cout<<"acceptance all means: "<<sampler.a_means_acceptance_rate()<<std::endl;
+  //std::cout<<"acceptance all means: "<<sampler.a_means_acceptance_rate()<<std::endl;
 
 
 

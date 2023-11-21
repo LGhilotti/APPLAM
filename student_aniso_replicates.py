@@ -186,7 +186,8 @@ if __name__ == "__main__" :
           etas = generate_etas_student(mus, delta_cov, cluster_alloc, seed)
           data = generate_data(lamb, etas, sigma_bar_cov, seed)
   
-          np.save(file = "data/Student_latent_data/applam/dataset.npy", arr = data)
+          #np.save(file = "data/Student_latent_data/applam/dataset.npy", arr = data)
+          np.savetxt('data/Student_latent_data/applam/dataset.csv', data, delimiter=',', fmt='%f')
           
           # scaling of data
           #centering_var=stat.median(np.mean(data,0))

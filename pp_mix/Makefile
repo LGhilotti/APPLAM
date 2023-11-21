@@ -1,6 +1,6 @@
 ROOT_DIR := .
 SRC_DIR := $(ROOT_DIR)/src
-SPIKES_DIR := $(SRC_DIR)/spikes
+SPIKES_DIR := $(SRC_DIR)/prove
 PROTO_DIR := $(ROOT_DIR)/protos
 
 CXX = g++

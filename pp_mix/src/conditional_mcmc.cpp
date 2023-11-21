@@ -633,23 +633,47 @@ void MultivariateConditionalMCMC::sample_deltas_a() {
 
 
 void MultivariateConditionalMCMC::sample_allocations_and_relabel() {
+
+  /*int d = a_means.cols();
+  int err_after_na = 0;
+  for (int h=0; h<na_deltas.size(); h++){
+  
+    if ((na_deltas[h].get_prec() - MatrixXd::Identity(d,d)).sum() != 0){
+      err_after_na += 1;
+    }
+  }
+  int err_after_a = 0;
+  for (int h=0; h<a_deltas.size(); h++){
+  
+    if ((a_deltas[h].get_prec() - MatrixXd::Identity(d,d)).sum() != 0){
+      err_after_a += 1;
+    }
+  }
+  std::cout<<"Error sample_alloc(deltas na): "<<err_after_na<<std::endl;
+  std::cout<<"Error sample_alloc(deltas a): "<<err_after_a<<std::endl;*/
+  
   int Ma = a_means.rows();
   int Mna = na_means.rows();
   // current number of components (a + na)
   int Mtot = Ma + Mna;
 
-
-  const MatrixXd &curr_a_means = a_means;
-  const MatrixXd &curr_na_means = na_means;
-  const std::vector<PrecMat> &curr_a_deltas = a_deltas;
-  const std::vector<PrecMat> &curr_na_deltas = na_deltas;
-  const VectorXd &curr_a_jumps = a_jumps;
-  const VectorXd &curr_na_jumps = na_jumps;
-
+  //std::cout << "Ma= "<<Ma<<std::endl;
+  //std::cout << "Mna= "<<Mna<<std::endl;
+  
+  const MatrixXd &curr_a_means = a_means; //queste sono non aleatorie
+  const MatrixXd &curr_na_means = na_means; //queste sono non aleatorie
+  const std::vector<PrecMat> &curr_a_deltas = a_deltas; //non aleatorie  
+  const std::vector<PrecMat> &curr_na_deltas = na_deltas; //non aleatorie
+  const VectorXd &curr_a_jumps = a_jumps;//non aleatorie
+  const VectorXd &curr_na_jumps = na_jumps;//non aleatorie
+    
   std::vector<MatrixXd> a_prec_matrices;
   std::vector<MatrixXd> na_prec_matrices;
 
   MatrixXd log_probas = data_lpdf_in_components();
+  //std::cout<<"log_probas_initial"<<std::endl;
+  //std::cout<<log_probas.colwise().sum()<<std::endl;
+  
   for (int k = 0; k < Ma; k++) {
       log_probas.row(k) = log_probas.row(k).array() + std::log(a_jumps(k));
   }
@@ -657,7 +681,10 @@ void MultivariateConditionalMCMC::sample_allocations_and_relabel() {
   for (int k = 0; k < Mna; k++) {
       log_probas.row(k + Ma) = log_probas.row(k + Ma).array() + std::log(na_jumps(k));
   }
-
+  
+  //std::cout << "log_probas_final "<<std::endl;
+  //std::cout<< log_probas.colwise().sum()<<std::endl;
+  
   for (int i = 0; i < ndata; i++) {
     VectorXd probas = softmax_fun(log_probas.col(i));
     if (probas.sum() == 0){
@@ -665,7 +692,8 @@ void MultivariateConditionalMCMC::sample_allocations_and_relabel() {
     }
     else {clus_alloc[i] = categorical_rng(probas, Rng::Instance().get()) - 1;}
   }
-
+  //std::cout << "clus alloc before relabel"<<std::endl;
+  //std::cout<< clus_alloc.transpose()<<std::endl;
   _relabel();
 }
 
@@ -673,7 +701,7 @@ MatrixXd MultivariateConditionalMCMC::data_lpdf_in_components() {
 
     MatrixXd M0(Lambda.transpose() * sigma_bar.asDiagonal());
     MatrixXd M1( M0 * Lambda);
-
+    
     MatrixXd out(a_jumps.size() + na_jumps.size(), data.rows());
     int d = a_means.cols();
 
@@ -692,11 +720,16 @@ MatrixXd MultivariateConditionalMCMC::data_lpdf_in_components() {
 
       out.row(i) = num.array() + 0.5 * log_det_prec;
     }
+    
 
     for (int i = 0; i < na_jumps.size(); i++) {
+      //std::cout<<"i: "<< i<<std::endl;
+      //std::cout<<"na_means(row i)"<<na_means.row(i)<<std::endl;
+      //std::cout<<"a_deltas(i)"<<a_deltas[i]<<std::endl;
+       
       VectorXd mu = Lambda * na_means.row(i).transpose();
       MatrixXd Sn_bar_cho = LLT<MatrixXd>(
-        M1 + a_deltas[i].get_prec()).solve(MatrixXd::Identity(d, d));
+        M1 + na_deltas[i].get_prec()).solve(MatrixXd::Identity(d, d));
       MatrixXd M2 = M0 * (data.rowwise() - mu.transpose()).transpose();
       VectorXd num = (Sn_bar_cho * M2).colwise().squaredNorm();
       MatrixXd temp = (data.rowwise() - mu.transpose()).array().square();
@@ -706,7 +739,12 @@ MatrixXd MultivariateConditionalMCMC::data_lpdf_in_components() {
       double log_det_prec = sigma_bar.array().log().sum() + \
         na_deltas[i].get_log_det() + \
         Sn_bar_cho.diagonal().array().log().sum();
-
+        
+      //std::cout<<"num sum: "<<num.sum()<<std::endl;
+      
+      
+      //std::cout<<"logdetprec: "<<log_det_prec<<std::endl;
+      
       out.row(a_jumps.size() + i) = num.array() + 0.5 * log_det_prec;
     }
 
@@ -716,7 +754,25 @@ MatrixXd MultivariateConditionalMCMC::data_lpdf_in_components() {
 void MultivariateConditionalMCMC::_relabel() {
   std::set<int> na2a;  // non active that become active
   std::set<int> a2na;  // active that become non active
-
+  
+  /*int d = a_means.cols();
+  int err_before_na = 0;
+  for (int h=0; h<na_deltas.size(); h++){
+  
+    if ((na_deltas[h].get_prec() - MatrixXd::Identity(d,d)).sum() != 0){
+      err_before_na += 1;
+    }
+  }
+  int err_before_a = 0;
+  for (int h=0; h<a_deltas.size(); h++){
+  
+    if ((a_deltas[h].get_prec() - MatrixXd::Identity(d,d)).sum() != 0){
+      err_before_a += 1;
+    }
+  }
+  std::cout<<"Error before(deltas na): "<<err_before_na<<std::endl;
+  std::cout<<"Error before(deltas a): "<<err_before_a<<std::endl;*/
+  
   int Ma = a_means.rows();
   int Mna = na_means.rows();
   int Mtot = Ma + Mna;
@@ -754,7 +810,8 @@ void MultivariateConditionalMCMC::_relabel() {
     }
   }
   
-
+  
+  
   // NOW TAKE CARE OF NON ACTIVE THAT BECOME ACTIVE
   int n_new_a = na2a.size();
   std::vector<int> na2a_vec(na2a.begin(), na2a.end());
@@ -779,6 +836,22 @@ void MultivariateConditionalMCMC::_relabel() {
     }
   }
   
+  /*int err_after_na = 0;
+  for (int h=0; h<na_deltas.size(); h++){
+  
+    if ((na_deltas[h].get_prec() - MatrixXd::Identity(d,d)).sum() != 0){
+      err_after_na += 1;
+    }
+  }
+  int err_after_a = 0;
+  for (int h=0; h<a_deltas.size(); h++){
+  
+    if ((a_deltas[h].get_prec() - MatrixXd::Identity(d,d)).sum() != 0){
+      err_after_a += 1;
+    }
+  }
+  std::cout<<"Error after(deltas na): "<<err_after_na<<std::endl;
+  std::cout<<"Error after(deltas a): "<<err_after_a<<std::endl;*/
 
   // NOW JOIN THE STUFF TOGETHER
   if (n_new_a > 0) {
@@ -824,7 +897,24 @@ void MultivariateConditionalMCMC::_relabel() {
 
   }
 
-
+  /*int err_after2_na = 0;
+  for (int h=0; h<na_deltas.size(); h++){
+  
+    if ((na_deltas[h].get_prec() - MatrixXd::Identity(d,d)).sum() != 0){
+      err_after2_na += 1;
+    }
+  }
+  int err_after2_a = 0;
+  for (int h=0; h<a_deltas.size(); h++){
+  
+    if ((a_deltas[h].get_prec() - MatrixXd::Identity(d,d)).sum() != 0){
+      err_after2_a += 1;
+    }
+  }
+  std::cout<<"Error after2(deltas na): "<<err_after2_na<<std::endl;
+  std::cout<<"Error after2(deltas a): "<<err_after2_a<<std::endl;*/
+  
+  
   // BUILD THE VECTOR OF PERMUTATION
 
   std::vector<int> perm(Mtot);
@@ -885,7 +975,10 @@ void MultivariateConditionalMCMC::_relabel() {
   for (int i = 0; i < ndata; i++) {
     clus_alloc(i) = old2new[clus_alloc(i)];
   }
-
+  
+  //std::cout<<"clus alloc after relabel"<<std::endl;
+  //std::cout<<clus_alloc.transpose()<<std::endl;
+  
   obs_by_clus.resize(0);
   obs_by_clus.resize(a_means.rows());
   etas_by_clus.resize(0);
@@ -894,6 +987,14 @@ void MultivariateConditionalMCMC::_relabel() {
     obs_by_clus[clus_alloc(i)].push_back(i);
     etas_by_clus[clus_alloc(i)].push_back(etas.row(i).transpose());
   }
+  /*std::cout<<"obs_by_cluster\n"<<std::endl;
+  for (int h=0; h< obs_by_clus.size(); h++){
+    for (int k=0; k<obs_by_clus[h].size(); k++){
+      std::cout<< obs_by_clus[h][k]<<";";
+    }
+    std::cout<<std::endl;
+  }*/
+  
 
   return;
 }
