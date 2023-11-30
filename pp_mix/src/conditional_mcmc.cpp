@@ -348,7 +348,8 @@ void MultivariateConditionalMCMC::run_one_trick(std::string fix_lambda, std::str
   //std::cout<<"sample alloca and relabel"<<std::endl;
   // sample c | rest and reorganize the all and nall parameters, and c as well
   // sample_allocations_and_relabel();
-
+  _relabel();
+  
   //std::cout<<"sample means na"<<std::endl;
   sample_means_obj->perform_update_trick_na(Ctilde);
 

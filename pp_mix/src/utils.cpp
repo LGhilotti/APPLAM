@@ -77,7 +77,7 @@ double o_multi_normal_prec_lpdf(const VectorXd &x, const VectorXd &mu,
   using stan::math::NEG_LOG_SQRT_TWO_PI;
 
   double out = 0.5 * sigma.get_log_det() + NEG_LOG_SQRT_TWO_PI * x.size();
-  out -= 0.5 * (sigma.get_cho_factor_eval() * (x - mu)).squaredNorm();
+  out -= 0.5 * (sigma.get_cho_factor_eval().transpose() * (x - mu)).squaredNorm();
   return out;
 }
 
@@ -88,7 +88,7 @@ double o_multi_normal_prec_lpdf(const std::vector<VectorXd> &x,
   int n = x.size();
   double out = sigma.get_log_det() * n;
 
-  const MatrixXd &cho_sigma = sigma.get_cho_factor_eval();
+  const MatrixXd &cho_sigma = sigma.get_cho_factor_eval().transpose();
 
   std::vector<double> loglikes(n);
   for (int i = 0; i < n; i++) {

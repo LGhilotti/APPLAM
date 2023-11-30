@@ -11,7 +11,7 @@ alphajump: 1.
 
 betajump: 3.0
 
-agamma: 100.0
+agamma: 1.0
 
 bgamma: 1.0
 

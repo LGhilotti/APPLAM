@@ -35,7 +35,7 @@ class ConditionalMCMC(object):
         self.params = hyperpar
         self.serialized_params = self.params.SerializeToString()
 
-    def run(self, ntrick, nburn, niter, thin, data, d, ranges = -1, lamb = 0, fix_lambda = "FALSE",fix_sigma = "FALSE", log_every=200 ):
+    def run(self, ntrick, nburn, niter, thin, data, d, lamb, ranges = -1, fix_lambda = "FALSE",fix_sigma = "FALSE", log_every=200 ):
 
         check_params(self.params, data, d)
 
@@ -47,22 +47,20 @@ class ConditionalMCMC(object):
 
         self.serialized_data = to_proto(data).SerializeToString()
         self.serialized_ranges = to_proto(ranges).SerializeToString()
-        if lamb == 0:
-            lamb = np.zeros( (data.shape[1], d) )
-
+        
         self.serialized_lambda = to_proto(lamb).SerializeToString()
 
         np.random.seed(123456)
-        km = KMeans(10)
+        km = KMeans(2)
         km.fit(data)
         allocs = km.labels_.astype(int)
         print("Allocs: ", allocs)
 
         
-
-        self._serialized_chains, self.means_ar, self.lambda_ar = pp_mix_high._run_pp_mix(
+        with pp_mix_high.ostream_redirect(stdout=True, stderr=True):
+          self._serialized_chains, self.means_ar, self.lambda_ar = pp_mix_high._run_pp_mix(
             ntrick, nburn, niter, thin, self.serialized_data, self.serialized_params,
-            d, self.serialized_ranges, allocs, self.serialized_lambda, fix_lambda, fix_sigma, log_every)
+            d, self.serialized_lambda, self.serialized_ranges, allocs, fix_lambda, fix_sigma, log_every)
 
         objType = MultivariateMixtureState
 
@@ -114,7 +112,7 @@ class ConditionalMCMC_isotropic(object):
         self.params = hyperpar
         self.serialized_params = self.params.SerializeToString()
 
-    def run(self, ntrick, nburn, niter, thin, data, d, ranges = -1, lamb = 0, fix_lambda = "FALSE",fix_sigma = "FALSE", log_every=200):
+    def run(self, ntrick, nburn, niter, thin, data, d, lamb, ranges = -1, fix_lambda = "FALSE",fix_sigma = "FALSE", log_every=200):
 
         check_params(self.params, data, d)
 
@@ -127,15 +125,12 @@ class ConditionalMCMC_isotropic(object):
 
         self.serialized_data = to_proto(data).SerializeToString()
         self.serialized_ranges = to_proto(ranges).SerializeToString()
-        
-        if lamb == 0:
-            lamb =  np.zeros( (data.shape[1], d) )
 
         self.serialized_lambda = to_proto(lamb).SerializeToString()
 
 
         np.random.seed(123456)
-        km = KMeans(10)
+        km = KMeans(2)
         km.fit(data)
         allocs = km.labels_.astype(int)
 
@@ -143,7 +138,7 @@ class ConditionalMCMC_isotropic(object):
 
         self._serialized_chains, self.means_ar, self.lambda_ar = pp_mix_high._run_pp_mix_isotropic(
             ntrick, nburn, niter, thin, self.serialized_data, self.serialized_params,
-            d, self.serialized_ranges, allocs, self.serialized_lambda, fix_lambda, fix_sigma, log_every)
+            d, self.serialized_lambda, self.serialized_ranges, allocs, fix_lambda, fix_sigma, log_every)
 
         objType = MultivariateMixtureState
 

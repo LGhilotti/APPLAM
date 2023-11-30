@@ -18,19 +18,32 @@ void MeansSamplerClassic::perform_update_allocated(MatrixXd& Ctilde) {
 
     double currlik, proplik, prior_ratio, lik_ratio, arate;
     const VectorXd &currmean = mcmc->get_single_a_mean(i).transpose();
-    const MatrixXd &cov_prop = MatrixXd::Identity(mcmc->get_dim_fact(), mcmc->get_dim_fact()) * prop_means_sigma;
-
+    MatrixXd cov_prop = MatrixXd::Identity(mcmc->get_dim_fact(), mcmc->get_dim_fact()) * prop_means_sigma;
+    
+    //std::cout << "curr mean: " << currmean<< std::endl;
+    
+    if (uniform_rng(0, 1, Rng::Instance().get()) < 0.25){
+      cov_prop = 10*cov_prop;
+    }
     // we PROPOSE a new point from a multivariate normal, with mean equal to the current point
     // and covariance matrix diagonal
 
     VectorXd prop =
         stan::math::multi_normal_rng(currmean, cov_prop, Rng::Instance().get());
+        
+    //std::cout << "prop mean: " << prop << std::endl;
 
     if (mcmc->is_inside(prop)){ // if not, just keep the current mean and go to the next a_mean
 
         currlik = mcmc->lpdf_given_clus_multi(mcmc->get_etas_by_clus(i), currmean, mcmc->get_single_a_delta(i));
         proplik = mcmc->lpdf_given_clus_multi(mcmc->get_etas_by_clus(i), prop, mcmc->get_single_a_delta(i));
-
+        
+        /*auto tmp = mcmc->get_etas_by_clus(i);
+        std::cout << "etas_by_clus: " <<std::endl;
+        for (int h = 0; h < tmp.size(); h++){
+          std::cout<< tmp[h]<< std::endl;
+        }*/
+        
         lik_ratio = proplik - currlik;
 
         MatrixXd others(allmeans.rows() - 1, mcmc->get_dim_fact());
@@ -75,6 +88,9 @@ void MeansSamplerClassic::perform_update_allocated(MatrixXd& Ctilde) {
         prior_ratio =
             mcmc->pp_mix->papangelou(Ctilde_oth, Ctilde_prop) - mcmc->pp_mix->papangelou(Ctilde_oth, Ctilde);
 
+        //std::cout << "prior ratio: " << prior_ratio << std::endl;
+        //std::cout << "lik ratio: " << lik_ratio << std::endl;
+        
         arate = lik_ratio + prior_ratio;
 
         if (std::log(uniform_rng(0, 1, Rng::Instance().get())) < arate) {

@@ -11,6 +11,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/iostream.h>
 /// COLPA DI QUESTO EIGEN.H
 //#include <pybind11/eigen.h>
 
@@ -31,9 +32,9 @@ std::tuple<std::deque<py::bytes>, double , double>
                                   std::string serialized_data, //const Eigen::MatrixXd &data,
                                   std::string serialized_params,
                                   int d,
+                                  std::string serialized_lamb,
                                   std::string serialized_ranges, //const Eigen::MatrixXd &ranges,
                                   std::vector<int> init_allocs,
-                                  std::string serialized_lamb,
                                   std::string fix_lambda,
                                   std::string fix_sigma,
 				                          int log_every = 200 ) {
@@ -67,18 +68,19 @@ std::tuple<std::deque<py::bytes>, double , double>
   py::print("block 3");
   Eigen::VectorXi init_allocs_ = Eigen::Map<Eigen::VectorXi>(init_allocs.data(), init_allocs.size());
   sampler.initialize(data, init_allocs_, lamb);
-  /*
-  Eigen::MatrixXd in_means = sampler.get_a_means();
   
-  py::print("Initial Allocated means: ");
-  for (int h = 0; h < in_means.rows(); h++){
-    for (int k = 0; k < in_means.cols(); k++){
-      py::print(in_means(h,k));
+  
+  Eigen::MatrixXd in_etas = sampler.get_etas();
+  
+  py::print("initial etas: ");
+  for (int h = 0; h < in_etas.rows(); h++){
+    for (int k = 0; k < in_etas.cols(); k++){
+      py::print(in_etas(h,k));
     }
   }
-  */
   
-
+  
+  //py::print("number of allocated means: ", sampler.get_num_a_means());
 
   for (int i = 0; i < ntrick; i++) {
     sampler.run_one_trick(fix_lambda, fix_sigma);
@@ -86,7 +88,27 @@ std::tuple<std::deque<py::bytes>, double , double>
       py::print("Trick, iter #", i + 1, " / ", ntrick);
     }
   }
-
+  
+  Eigen::MatrixXd in_means = sampler.get_a_means();
+  
+  py::print("after trick - Allocated means: ");
+  for (int h = 0; h < in_means.rows(); h++){
+    for (int k = 0; k < in_means.cols(); k++){
+      py::print(in_means(h,k));
+    }
+  }
+  
+   Eigen::MatrixXd after_etas = sampler.get_etas();
+  
+  py::print("after etas: ");
+  for (int h = 0; h < after_etas.rows(); h++){
+    for (int k = 0; k < after_etas.cols(); k++){
+      py::print(after_etas(h,k));
+    }
+  }
+  
+  
+  
   for (int i = 0; i < burnin; i++) {
     sampler.run_one(fix_lambda, fix_sigma);
     if ((i + 1) % log_every == 0) {
@@ -94,6 +116,7 @@ std::tuple<std::deque<py::bytes>, double , double>
     }
   }
 
+  
   for (int i = 0; i < niter; i++) {
     sampler.run_one(fix_lambda, fix_sigma);
     if (i % thin == 0) {
@@ -208,9 +231,9 @@ std::tuple<std::deque<py::bytes>, double , double>
                                   std::string serialized_data, //const Eigen::MatrixXd &data,
                                   std::string serialized_params,
                                   int d,
+                                  std::string serialized_lamb,
                                   std::string serialized_ranges, //const Eigen::MatrixXd &ranges,
                                   std::vector<int> init_allocs,
-				                          std::string serialized_lamb,
                                   std::string fix_lambda,
                                   std::string fix_sigma,
 				                          int log_every = 200) {
@@ -418,6 +441,8 @@ py::bytes cluster_estimate( //const Eigen::MatrixXd &alloc_chain
 
 PYBIND11_MODULE(pp_mix_high, m) {
   m.doc() = "aaa";  // optional module docstring
+  
+  py::add_ostream_redirect(m, "ostream_redirect");
 
   m.def("_run_pp_mix", &_run_pp_mix, "aaa");
 

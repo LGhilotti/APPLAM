@@ -78,12 +78,19 @@ def generate_etas_student(mus, deltas_cov, cluster_alloc, seed):
      out = np.vstack([multivariate_t_rvs(m = mus[i,:], S = deltas_cov, df = 3, seed = seed)[0] for i in cluster_alloc])
      return out
 
-def generate_data(Lambda, etas, sigma_bar_cov, seed):
+def generate_data_gaussian(Lambda, etas, sigma_bar_cov, seed):
     np.random.seed(seed)
     means = np.matmul(Lambda,etas.T)
     sigma_bar_cov_mat = np.diag(sigma_bar_cov)
     out = np.vstack([mvn.rvs(mean = means[:,i], cov = sigma_bar_cov_mat) for i in range(etas.shape[0])])
     return out
+    
+def generate_data_student(Lambda, etas, sigma_bar_cov, seed):
+    means = np.matmul(Lambda,etas.T)
+    sigma_bar_cov_mat = np.diag(sigma_bar_cov)
+    out = np.vstack([multivariate_t_rvs(m = means[:,i], S = sigma_bar_cov_mat, df = 3, seed = seed)[0] for i in range(etas.shape[0])])
+    return out
+
 
 def create_lambda(p,d):
     #if p % d != 0:
@@ -135,8 +142,8 @@ n_reruns = 1
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("--p_values", nargs="+", default=["2"])
-    parser.add_argument("--d_values", nargs="+", default=["2"])
-    parser.add_argument("--m_values", nargs="+", default=["4"])
+    parser.add_argument("--d_values", nargs="+", default=["1"])
+    parser.add_argument("--m_values", nargs="+", default=["1"])
     parser.add_argument("--n_by_clus", nargs="+", default=["20"])
     args = parser.parse_args()
 
@@ -163,28 +170,32 @@ if __name__ == "__main__" :
           #with open("data/Gaussian_data/datasets/gauss_p_{0}_d_{1}_M_{2}_npc_{3}_data.csv".format(p,dtrue,M,npc), newline='') as my_csv:
           #    data = pd.read_csv(my_csv, sep=',', header=None).values
           
-          dist=2
-  
           sigma_bar_prec = np.repeat(1000, p)
           sigma_bar_cov = 1/sigma_bar_prec
           
-          #lamb = create_lambda(p,dtrue)
-          lamb = np.eye(2)
-          delta_cov = np.diag(np.array([0.2,0.001]))
+          #lamb = np.eye(2)
+          lamb = np.array([[3],[0]])
+          #delta_cov = np.diag(np.array([0.2,0.001]))
+          delta_cov = np.eye(1)
           
-          #mus = create_mus(dtrue,M,dist)
-          mus = np.zeros((M,dtrue))
-          mus[0,:] = np.array([3, -1])
-          mus[1,:] = np.array([-3, 1])
-          mus[2,:] = np.array([-3, -1])
-          mus[3,:] = np.array([3, 1])
-          
+          #mus = np.zeros((M,dtrue))
+          #mus[0,:] = np.array([3, -1])
+          #mus[1,:] = np.array([-3, 1])
+          #mus[2,:] = np.array([-3, -1])
+          #mus[3,:] = np.array([3, 1])
+          #cluster_alloc = create_cluster_alloc(npc,M)
+          #etas = generate_etas_student(mus, delta_cov, cluster_alloc, seed)
+          #data = generate_data(lamb, etas, sigma_bar_cov, seed)
           
           seed = 1222432
+          np.random.seed(seed)
+          etas = np.matrix(np.random.normal(size = npc).reshape(npc,1))
+          print(etas)
+          data = generate_data_student(lamb, etas, sigma_bar_cov, seed)          
           
-          cluster_alloc = create_cluster_alloc(npc,M)
-          etas = generate_etas_student(mus, delta_cov, cluster_alloc, seed)
-          data = generate_data(lamb, etas, sigma_bar_cov, seed)
+          
+          
+          
   
           #np.save(file = "data/Student_latent_data/applam/dataset.npy", arr = data)
           np.savetxt('data/Student_latent_data/applam/dataset.csv', data, delimiter=',', fmt='%f')
@@ -198,7 +209,7 @@ if __name__ == "__main__" :
           data_scaled= data
   
           #d = dtrue
-          d_s = [2]
+          d_s = [1]
   
           for d in d_s:
   
@@ -268,7 +279,7 @@ if __name__ == "__main__" :
                   sampler_aniso = ConditionalMCMC(hyperpar = hyperpar_aniso)
     
                   # Run the algorithm
-                  sampler_aniso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, lamb = 0, fix_lambda = "TRUE", fix_sigma = "TRUE", log_every = log_ev)
+                  sampler_aniso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, lamb = lamb, fix_lambda = "TRUE", fix_sigma = "TRUE", log_every = log_ev)
     
     
                   # Save results in the following path
@@ -344,7 +355,7 @@ if __name__ == "__main__" :
                   sampler_iso = ConditionalMCMC_isotropic(hyperpar = hyperpar_iso)
     
                   # Run the algorithm
-                  sampler_iso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, lamb = 0, fix_lambda = "TRUE", fix_sigma = "TRUE", log_every = log_ev)
+                  sampler_iso.run(ntrick, nburn, niter, thin, data_scaled, d, ranges, lamb = lamb, fix_lambda = "TRUE", fix_sigma = "TRUE", log_every = log_ev)
     
     
                   # Save results in the following path

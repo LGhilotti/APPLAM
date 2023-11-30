@@ -64,7 +64,7 @@ def check_params(params, data, d):
         raise ValueError(
             "Parameter for Lambda update (MH or Mala) should be greater than 0")
 
-def compute_ranges(params, data, d):
+def compute_ranges_old(params, data, d):
 
     p = data.shape[1]
     max_latent = 0
@@ -94,6 +94,30 @@ def compute_ranges(params, data, d):
 
 
     return 10 * np.array([np.full(d,-max_latent),np.full(d,max_latent)])
+
+def compute_ranges(lamb, data, d):
+
+    p = data.shape[1]
+    max_latent = 0
+    
+    lat_fact = np.linalg.solve(
+        np.matmul(lamb.T, lamb),
+        np.matmul(lamb.T, data.T))
+    max_latent = np.max(np.abs(lat_fact))
+    print("max_latent: {0:.4f}".format(max_latent))
+
+    #for i in range(100) :
+    #    tau = np.random.gamma(p * d * params.a, 2)
+    #    Psi = np.random.exponential(2.0 , size = p*d)
+    #    Phi = np.random.dirichlet(np.full(p*d, params.a))
+    #    Lambda = (tau * Phi * np.sqrt(Psi) * np.random.normal(size=p*d)).reshape((p,d))
+
+    #   lat_fact = np.linalg.solve(np.dot(Lambda.T,Lambda), np.dot(Lambda.T, data.T))
+    #    max_latent = np.max([np.max(np.abs(lat_fact)),max_latent])
+
+
+    return 2 * np.array([np.full(d,-max_latent),np.full(d,max_latent)])
+
 
 def compute_ranges_binary(params, binary_data, d):
 

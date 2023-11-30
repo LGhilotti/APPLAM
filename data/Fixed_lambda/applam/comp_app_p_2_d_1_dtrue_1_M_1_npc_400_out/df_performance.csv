@@ -1,0 +1,3 @@
+,model,p,dtrue,d,M,npc,means_ar,lambda_ar,intensity,mode_nclus,avg_nclus,avg_nonalloc,ari_best_clus,CI_aris,ranges
+0,APPLAM,2,1,1,1,400,0.2198952879581152,,50,2,2.088,3.446,0.0,"(nan, nan)",-4.9684269248528725
+1,Isotropic,2,1,1,1,400,0.2198952879581152,,50,2,2.088,3.446,0.0,"(nan, nan)",-4.9684269248528725
