@@ -70,14 +70,14 @@ std::tuple<std::deque<py::bytes>, double , double>
   sampler.initialize(data, init_allocs_, lamb);
   
   
-  Eigen::MatrixXd in_etas = sampler.get_etas();
+  /*Eigen::MatrixXd in_etas = sampler.get_etas();
   
   py::print("initial etas: ");
   for (int h = 0; h < in_etas.rows(); h++){
     for (int k = 0; k < in_etas.cols(); k++){
       py::print(in_etas(h,k));
     }
-  }
+  }*/
   
   
   //py::print("number of allocated means: ", sampler.get_num_a_means());
@@ -98,14 +98,14 @@ std::tuple<std::deque<py::bytes>, double , double>
     }
   }
   
-   Eigen::MatrixXd after_etas = sampler.get_etas();
+  /* Eigen::MatrixXd after_etas = sampler.get_etas();
   
   py::print("after etas: ");
   for (int h = 0; h < after_etas.rows(); h++){
     for (int k = 0; k < after_etas.cols(); k++){
       py::print(after_etas(h,k));
     }
-  }
+  }*/
   
   
   
