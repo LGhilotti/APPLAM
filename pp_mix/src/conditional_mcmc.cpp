@@ -381,7 +381,7 @@ if (fix_lambda == "FALSE"){
     sample_tau();
     sample_Phi();
 
-    sample_lambda->perform(Ctilde);
+    //sample_lambda->perform(Ctilde);
   }
 
   // print_debug_string();

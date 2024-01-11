@@ -124,8 +124,8 @@ def create_cluster_alloc(n_pc,M):
 ##############################################
 
 # Set hyperparameters (agreeing with Chandra)
-DEFAULT_PARAMS_FILE_ANISO = "data/Fixed_lambda_multidim/resources/sampler_params_aniso.asciipb"
-DEFAULT_PARAMS_FILE_ISO = "data/Fixed_lambda_multidim/resources/sampler_params_iso.asciipb"
+DEFAULT_PARAMS_FILE_ANISO = "data/Free_lambda_multidim/resources/sampler_params_aniso.asciipb"
+DEFAULT_PARAMS_FILE_ISO = "data/Free_lambda_multidim/resources/sampler_params_iso.asciipb"
 #SPECIFIC_PARAMS_FILE = "data/Gaussian_data/resources/comp_pars_p_{0}_d_{1}_dtrue_{2}_M_{3}_npc_{4}.asciipb"
 
 # Set the truncation level N (here called n)
@@ -197,7 +197,9 @@ print(etas)
 
 data = np.matmul(lamb,etas.T).T +  np.vstack([mvn.rvs(cov = np.diag(sigma_bar_cov)) for i in range(etas.shape[0])])
 
-np.savetxt('data/Fixed_lambda_multidim/applam/dataset.csv', data, delimiter=',', fmt='%f')
+np.savetxt('data/Free_lambda_multidim/applam/dataset.csv', data, delimiter=',', fmt='%f')
+
+
 
 # scaling of data
 #centering_var=stat.median(np.mean(data,0))
@@ -212,7 +214,7 @@ d_s = [2]
 
 for d in d_s:
 
-  outpath_d = "data/Fixed_lambda_multidim/applam/comp_app_p_{0}_d_{1}_dtrue_{2}_M_{3}_npc_{4}_out".format(p,d,dtrue,M,npc)
+  outpath_d = "data/Free_lambda_multidim/applam/comp_app_p_{0}_d_{1}_dtrue_{2}_M_{3}_npc_{4}_out".format(p,d,dtrue,M,npc)
   if not(os.path.exists(outpath_d)):
       os.makedirs(outpath_d)
   
@@ -286,7 +288,7 @@ for d in d_s:
   
             
         # Run the algorithm
-        sampler_aniso.run(ntrick, nburn, niter, thin, data_scaled, d, lamb, ranges, fix_lambda = "TRUE", fix_sigma = "TRUE", log_every = log_ev)
+        sampler_aniso.run(ntrick, nburn, niter, thin, data_scaled, d, lamb, ranges, fix_lambda = "FALSE", fix_sigma = "TRUE", log_every = log_ev)
   
   
         # Save results in the following path
@@ -380,7 +382,7 @@ for d in d_s:
         sampler_iso = ConditionalMCMC_isotropic(hyperpar = hyperpar_iso)
   
         # Run the algorithm
-        sampler_iso.run(ntrick, nburn, niter, thin, data_scaled, d, lamb, ranges,  fix_lambda = "TRUE", fix_sigma = "TRUE", log_every = log_ev)
+        sampler_iso.run(ntrick, nburn, niter, thin, data_scaled, d, lamb, ranges,  fix_lambda = "FALSE", fix_sigma = "TRUE", log_every = log_ev)
   
   
         # Save results in the following path

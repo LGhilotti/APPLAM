@@ -116,7 +116,7 @@ def compute_ranges(lamb, data, d):
     #    max_latent = np.max([np.max(np.abs(lat_fact)),max_latent])
 
 
-    return 2 * np.array([np.full(d,-max_latent),np.full(d,max_latent)])
+    return 1.5 * np.array([np.full(d,-max_latent),np.full(d,max_latent)])
 
 
 def compute_ranges_binary(params, binary_data, d):

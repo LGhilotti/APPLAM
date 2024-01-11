@@ -1,0 +1,22 @@
+dpp {
+}
+
+fixed_multi_prec {
+ sigma: 1
+}
+
+a: 0.5
+
+alphajump: 0.0001
+
+betajump: 0.03
+
+agamma: 1.0
+
+bgamma: 1.0
+
+mh_sigma_means: 0.01
+
+mala_step_lambda: 0.0000000001
+
+seed_val: 12345

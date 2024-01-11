@@ -35,7 +35,7 @@ class ConditionalMCMC(object):
         self.params = hyperpar
         self.serialized_params = self.params.SerializeToString()
 
-    def run(self, ntrick, nburn, niter, thin, data, d, lamb, ranges = -1, fix_lambda = "FALSE",fix_sigma = "FALSE", log_every=200 ):
+    def run(self, ntrick, nburn, niter, thin, data, d, lamb, ranges = -1, n_init_centers = 2, fix_lambda = "FALSE",fix_sigma = "FALSE", log_every=200 ):
 
         check_params(self.params, data, d)
 
@@ -51,7 +51,7 @@ class ConditionalMCMC(object):
         self.serialized_lambda = to_proto(lamb).SerializeToString()
 
         np.random.seed(123456)
-        km = KMeans(2)
+        km = KMeans(n_init_centers)
         km.fit(data)
         allocs = km.labels_.astype(int)
         print("Allocs: ", allocs)
@@ -112,7 +112,7 @@ class ConditionalMCMC_isotropic(object):
         self.params = hyperpar
         self.serialized_params = self.params.SerializeToString()
 
-    def run(self, ntrick, nburn, niter, thin, data, d, lamb, ranges = -1, fix_lambda = "FALSE",fix_sigma = "FALSE", log_every=200):
+    def run(self, ntrick, nburn, niter, thin, data, d, lamb, ranges = -1, n_init_centers = 2, fix_lambda = "FALSE",fix_sigma = "FALSE", log_every=200):
 
         check_params(self.params, data, d)
 
@@ -130,7 +130,7 @@ class ConditionalMCMC_isotropic(object):
 
 
         np.random.seed(123456)
-        km = KMeans(2)
+        km = KMeans(n_init_centers)
         km.fit(data)
         allocs = km.labels_.astype(int)
 
