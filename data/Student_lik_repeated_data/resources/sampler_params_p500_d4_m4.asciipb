@@ -1,9 +1,12 @@
 dpp {
 }
 
-fixed_multi_prec {
- sigma: 1
+wishart {
+  nu: 50
+  identity: true
+  sigma: 20
 }
+
 
 a: 0.5
 
@@ -13,10 +16,10 @@ betajump: 1
 
 agamma: 1.0
 
-bgamma: 1.0
+bgamma: 0.3
 
 mh_sigma_means: 0.02
 
-mala_step_lambda: 0.0000000004
+mala_step_lambda: 0.00000000002
 
 seed_val: 12345

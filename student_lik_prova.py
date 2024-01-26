@@ -156,8 +156,8 @@ dist=5
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
-    parser.add_argument("--p_values", nargs="+", default=["500"])
-    parser.add_argument("--d_values", nargs="+", default=["4"])
+    parser.add_argument("--p_values", nargs="+", default=["400"])
+    parser.add_argument("--d_values", nargs="+", default=["5"])
     parser.add_argument("--m_values", nargs="+", default=["4"])
     parser.add_argument("--n_by_clus", nargs="+", default=["50"])
     args = parser.parse_args()
@@ -179,13 +179,15 @@ if __name__ == "__main__" :
       ### READ DATA AND PRE-PROCESSING ######
       #######################################
       
-      seed = 12345 
+      seed = 123456
       
       ranges = np.array([np.full(d,-10.),np.full(d,10.)])
       
       sigma_bar_prec = np.repeat(1, p)
       sigma_bar_cov = 1/sigma_bar_prec
-      #lamb = create_lambda(p,d)
+      lamb = create_lambda(p,d)     
+      #lamb = lamb/np.max(np.sum(lamb, axis=0))     
+              
       delta_cov = np.eye(d)
       mus = create_mus(d,M,dist)
       cluster_alloc = create_cluster_alloc(npc,M)
@@ -198,171 +200,33 @@ if __name__ == "__main__" :
       for j in range(n_reruns):
       
         seed = seed +1
-        lamb = ortho_group.rvs(dim = p, random_state = seed)
-        lamb = lamb[0:p,0:d]
-        print("lamb.shape= ", lamb.shape)
+        
+        #lamb = ortho_group.rvs(dim = p, random_state = seed)
+        #lamb = 5*lamb[0:p,0:d]
+        #print("lamb.shape= ", lamb.shape)
         
         etas = generate_etas_gaussian(mus, delta_cov, cluster_alloc, seed)
+        print("eta_first: ", etas[0,])
+        print("eta_second: ", etas[1,])
+        print("eta_last: ", etas[(npc*M)-1,])
         data = generate_data_student(lamb, etas, sigma_bar_cov, seed)
+        print("dim of data: ", data.shape)
         #data = generate_data_gaussian(lamb, etas, sigma_bar_cov, seed)
-
+        print("data_first: ", data[0,0:10])
+        print("data_second: ", data[1,0:10])
+        print("data_last: ", data[(npc*M)-1,0:10])
+        
         # scaling of data
         centering_var=stat.median(np.mean(data,0))
         scaling_var=stat.median(np.std(data,0))
         data_scaled=(data-centering_var)/scaling_var
+        print("centering_var: ",centering_var)
+        print("scaling_var: ", scaling_var)
+        print("datascaled_first: ", data_scaled[0,0:10])
+        print("datascaled_second: ", data_scaled[1,0:10])
+        print("datascaled_last: ", data_scaled[(npc*M)-1,0:10])
         
                 
-        #####################
-        ## APPLAM ###########
-        #####################
-        col_mean =np.mean(data,axis = 0)
-        
-        data_zero_mean = data - col_mean
-        
-        U, S, Vh = np.linalg.svd(data_zero_mean, full_matrices=True)
-        
-        lamb_est = Vh[0:d, ].transpose()
-
-        
-
-        ####################################
-        ##### HYPERPARAMETERS ##############
-        ####################################
-        hyperpar = Params()
-        params_file = SPECIFIC_PARAMS_FILE.format(p,d,M)
-        if os.path.exists(params_file):
-            print("Using dataset-specific params file for "
-                  "'p'={0}, 'd'={1} 'M'={2}".format(p,d,M))
-        else:
-            print("Using default params file for "
-                  "'p'={0}, 'd'={1} 'M'={2}".format(p,d,M))
-            params_file = DEFAULT_PARAMS_FILE
-        with open(params_file, 'r') as fp:
-            text_format.Parse(fp.read(), hyperpar)
-      
-        # Set the expected number of centers a priori
-        #square_vol = (ranges[1,0]*2)**d
-        #expected_points = [1,5,10]        
-        #rho_s = expected_points/square_vol
-        
-        rho_s = [0.05, 0.1, 0.2]
-
-        for rho in rho_s:
-
-            # Fix "s", then: rho_max = rho/s
-            # It follows: c = rho_max * (2 pi)^{d/2}
-            s = 0.5
-            rho_max = rho/s
-            c = rho_max * ((2. * np.pi) ** (float(d)/2))
-
-            
-
-            hyperpar.dpp.c = c
-            hyperpar.dpp.n = n
-            hyperpar.dpp.s = s
-
-            hyperpar.wishart.nu = hyperpar.wishart.nu + d
-
-            #################################################
-            ######## MCMC SAMPLER - APPLAM #############
-            #################################################
-
-            # Build the sampler
-            sampler_aniso = ConditionalMCMC(hyperpar = hyperpar)
-
-            # Run the algorithm
-            sampler_aniso.run(ntrick, nburn, niter, thin, data, d, lamb_est, ranges, n_init_centers = 4, fix_lambda = "FALSE", fix_sigma = "FALSE", log_every = log_ev)
-
-
-            # Save results in the following path
-            base_outpath_rho = os.path.join(outpath_d, "rho_{0}_out".format(rho)) 
-            if not(os.path.exists(base_outpath_rho)):
-                 os.makedirs(base_outpath_rho)
-
-            
-            # Some plots
-            chain_aniso = sampler_aniso.chains
-            
-            n_cluster_chain_aniso = np.array([x.ma for x in chain_aniso])
-          
-            n_nonall_chain_aniso = np.array([x.mna for x in chain_aniso])
-
-            # Mixing of tau parameter
-            if j == 0 :
-              fig = plt.figure()
-              tau_chain_aniso = np.array([x.lamb_block.tau for x in chain_aniso])
-              plt.plot(tau_chain_aniso)
-              plt.title("tau chain - APPLAM")
-              plt.savefig(os.path.join(base_outpath_rho, "tau_chain_aniso.pdf"))
-              plt.close()
-
-              # Mixing of the sbar parameters
-              fig = plt.figure()
-              first_sbar_chain_aniso = np.array([to_numpy(x.sigma_bar)[0] for x in chain_aniso])
-              plt.plot(first_sbar_chain_aniso,color='red')
-              last_sbar_chain_aniso = np.array([to_numpy(x.sigma_bar)[-1] for x in chain_aniso])
-              plt.plot(last_sbar_chain_aniso,color='blue')
-              plt.title("sbar_chain - APPLAM")
-              plt.savefig(os.path.join(base_outpath_rho, "sbar_chain_aniso.pdf"))
-              plt.close()
-              
-              
-              # Mixing of the Delta parameters
-              fig = plt.figure()
-              first_delta_chain_aniso = np.array([to_numpy(x.a_deltas[0])[0,0] for x in chain_aniso])
-              plt.plot(first_delta_chain_aniso,color='red')
-              last_delta_chain_aniso = np.array([to_numpy(x.a_deltas[0])[-1,-1] for x in chain_aniso])
-              plt.plot(last_delta_chain_aniso,color='blue')
-              plt.title("a_delta_chain - APPLAM")
-              plt.savefig(os.path.join(base_outpath_rho, "a_delta_chain_aniso.pdf"))
-              plt.close()
-
-              # Chain of the number of clusters
-              fig = plt.figure()
-              n_cluster_chain_aniso = np.array([x.ma for x in chain_aniso])
-              plt.plot(n_cluster_chain_aniso)
-              plt.title("number of clusters chain - APPLAM")
-              plt.savefig(os.path.join(base_outpath_rho, "nclus_chain_aniso.pdf"))
-              plt.close()
-
-            
-
-            ##################################################################
-            ####### Compute quantities for summarizing performance - APPLAM ###########
-            #################################################################
-
-            # Posterior mode of number of clusters
-            post_mode_nclus_aniso = mode(n_cluster_chain_aniso)[0][0]
-            # Posterior mean of number of clusters
-            post_avg_nclus_aniso = n_cluster_chain_aniso.mean()
-            # Posterior mean of number of non-allocated components
-            post_avg_nonall_aniso =  n_nonall_chain_aniso.mean()
-            # Cluster allocations along the iterations
-            clus_alloc_chain_aniso = [x.clus_alloc for x in chain_aniso]
-            # Best clustering estimate according to Binder's loss
-            best_clus_aniso = cluster_estimate(np.array(clus_alloc_chain_aniso))
-            # Save best cluster estimate
-            #np.savetxt(os.path.join(outpath, "best_clus_aniso.txt"), best_clus_aniso)
-            # Number of cluster of best clustering
-            n_clus_best_clus_aniso = np.size(np.unique(best_clus_aniso))
-            
-            # ARI of the best clustering
-            ari_best_clus_aniso = adjusted_rand_score(true_clus, best_clus_aniso)
-            # ARIs of the clusterings along the iterations
-            aris_chain_aniso = np.array([adjusted_rand_score(true_clus, x) for x in clus_alloc_chain_aniso])
-            mean_aris_aniso, sigma_aris_aniso = np.mean(aris_chain_aniso), np.std(aris_chain_aniso)
-            # CI of the previous ARIs
-            CI_aris_aniso = norm.interval(0.95, loc=mean_aris_aniso, scale=sigma_aris_aniso/sqrt(len(aris_chain_aniso)))
-
-
-            ###########################################################################
-            ####### Save inferred quantities in dataframe ############################
-            #########################################################################
-
-            list_performance_applam.append(["APPLAM", p,d,M,npc,sampler_aniso.means_ar, sampler_aniso.lambda_ar, rho, post_mode_nclus_aniso,
-                                post_avg_nclus_aniso, post_avg_nonall_aniso, ari_best_clus_aniso, CI_aris_aniso])
-
-          
         #####################
         ### LAMB ############
         #####################
@@ -370,10 +234,12 @@ if __name__ == "__main__" :
         nr = np.shape(data_scaled)[0]
         nc = np.shape(data_scaled)[1]
         y_r = robjects.r.matrix(data_scaled, nrow=nr, ncol=nc)
-        res_lamb = np.array(DL_mixture_r(y = y_r, nrun_lamb = 10^4, burn_lamb = 10^3,  thin_lamb = 2, conc_dir = conc_dir))
+        res_lamb = np.array(DL_mixture_r(y = y_r, d_lamb = d, nrun_lamb = 10**5, burn_lamb = 10**4,  thin_lamb = 5, conc_dir = conc_dir))
         
         res_lamb_df = pd.DataFrame(res_lamb.T)
         nclus_lamb_chain = res_lamb_df.nunique()
+        
+        print("nclus_chain: ",nclus_lamb_chain)
         
         
         vals_, counts_ = np.unique(nclus_lamb_chain, return_counts=True)
@@ -398,11 +264,10 @@ if __name__ == "__main__" :
         
         list_performance_lamb.append(["Lamb", p,d,M,npc, conc_dir, post_mode_nclus_lamb,
                                 post_avg_nclus_lamb, ari_best_clus_lamb, CI_aris_lamb])
+        
 
-    df_performance_applam = pd.DataFrame(list_performance_applam, columns=('model', 'p','d','M','npc','means_ar','lambda_ar', 'intensity',
-                                        'mode_nclus', 'avg_nclus', 'avg_nonalloc', 'ari_best_clus', 'CI_aris'))
-    df_performance_applam.to_csv(os.path.join(outpath_d, "df_performance_applam.csv"))
-    
     df_performance_lamb = pd.DataFrame(list_performance_lamb, columns=('model', 'p','d','M','npc','conc_dir',
                                         'mode_nclus', 'avg_nclus', 'ari_best_clus', 'CI_aris'))
     df_performance_lamb.to_csv(os.path.join(outpath_d, "df_performance_lamb.csv"))
+  
+    
