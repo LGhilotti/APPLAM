@@ -4,7 +4,7 @@
 #############################################
 ### IMPORT LIBRARIES AND FUNCTIONS ##########
 #############################################
-
+        
 import argparse
 import numpy as np
 import os
@@ -209,9 +209,14 @@ if __name__ == "__main__" :
         print("eta_first: ", etas[0,])
         print("eta_second: ", etas[1,])
         print("eta_last: ", etas[(npc*M)-1,])
-        data = generate_data_student(lamb, etas, sigma_bar_cov, seed)
+        #data = generate_data_student(lamb, etas, sigma_bar_cov, seed)
+        # read the dataset
+        with open("data/Student_latent_data/datasets/stud_p_{0}_d_{1}_M_{2}_npc_{3}_data.csv".format(p,d,M,npc), newline='') as my_csv:
+            data = pd.read_csv(my_csv, sep=',', header=None).values
+
+
+        
         print("dim of data: ", data.shape)
-        #data = generate_data_gaussian(lamb, etas, sigma_bar_cov, seed)
         print("data_first: ", data[0,0:10])
         print("data_second: ", data[1,0:10])
         print("data_last: ", data[(npc*M)-1,0:10])
@@ -230,11 +235,11 @@ if __name__ == "__main__" :
         #####################
         ### LAMB ############
         #####################
-        conc_dir = 1
+        conc_dir = 0.5
         nr = np.shape(data_scaled)[0]
         nc = np.shape(data_scaled)[1]
         y_r = robjects.r.matrix(data_scaled, nrow=nr, ncol=nc)
-        res_lamb = np.array(DL_mixture_r(y = y_r, d_lamb = d, nrun_lamb = 10**5, burn_lamb = 10**4,  thin_lamb = 5, conc_dir = conc_dir))
+        res_lamb = np.array(DL_mixture_r(y = y_r, d_lamb = d, nrun_lamb = 10**5, burn_lamb = 0,  thin_lamb = 10, conc_dir = conc_dir))
         
         res_lamb_df = pd.DataFrame(res_lamb.T)
         nclus_lamb_chain = res_lamb_df.nunique()

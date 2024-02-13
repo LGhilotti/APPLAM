@@ -128,8 +128,8 @@ class MultivariateConditionalMCMC {
     void run_one(std::string fix_lambda, std::string fix_sigma);
     void run_one_trick(std::string fix_lambda, std::string fix_sigma);
 
-    void run_one_binary();
-    void run_one_trick_binary();
+    void run_one_binary(std::string fix_sigma);
+    void run_one_trick_binary(std::string fix_sigma);
     void sample_latent_data();
     MatrixXd trunc_normal_rng(const ArrayXXd& means, const ArrayXXd& sigmas,
                               const ArrayXXi& y);

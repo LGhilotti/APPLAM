@@ -67,32 +67,29 @@ class ConditionalMCMC(object):
         self.chains = list(map(
             lambda x: getDeserialized(x, objType), self._serialized_chains))
 
-    def run_binary(self, ntrick, nburn, niter, thin, binary_data, d, sidelength = 0, log_every=200):
+    def run_binary(self, ntrick, nburn, niter, thin, binary_data, d, ranges = -1, n_init_centers = 2, fix_sigma = "FALSE", log_every=200):
 
         check_params(self.params, binary_data, d)
 
-        if sidelength == 0 :
+        if np.max(ranges) == -1:
             raise ValueError(
                 "Method not yet implemented")
             #ranges = compute_ranges_binary(self.params, binary_data, d);
         else:
-            ranges = np.array([[-sidelength]*d, [sidelength]*d])
             check_ranges(ranges, d)
 
-        #print("ranges: \n" , ranges)
 
         self.serialized_data = to_proto(binary_data).SerializeToString()
         self.serialized_ranges = to_proto(ranges).SerializeToString()
-        #km = KMeans(6)
-        #km.fit(binary_data)
-        #allocs = km.labels_.astype(int)
-
-        km = KModes(n_clusters=6, init='Huang', n_init=2)
+       
+        np.random.seed(123456)
+        km = KModes(n_clusters=n_init_centers, init='Huang', n_init=2)
         allocs = km.fit_predict(binary_data)
+        print("Allocs: ", allocs)
 
         self._serialized_chains, self.means_ar, self.lambda_ar = pp_mix_high._run_pp_mix_binary(
             ntrick, nburn, niter, thin, self.serialized_data, self.serialized_params,
-            d, self.serialized_ranges, allocs, log_every)
+            d, self.serialized_ranges, allocs, fix_sigma, log_every)
 
         objType = MultivariateMixtureState
 

@@ -393,7 +393,7 @@ if (fix_lambda == "FALSE"){
 //////////// FOR BINARY SAMPLER //////////////////////////////////
 ////////////////////////////////////////////////////////////////
 
-void MultivariateConditionalMCMC::run_one_binary() {
+void MultivariateConditionalMCMC::run_one_binary(std::string fix_sigma) {
 
   sample_latent_data();
 
@@ -442,7 +442,9 @@ void MultivariateConditionalMCMC::run_one_binary() {
   // sample Sigma bar
   //std::cout << "sample etas" << std::endl;
   // FIXED TO THE IDENTITY FOR THE APPLICATION
-  //sample_sigma_bar();
+  if (fix_sigma == "FALSE"){
+    sample_sigma_bar();
+  }
 
   // sample Lambda block
   sample_Psi();
@@ -456,7 +458,7 @@ void MultivariateConditionalMCMC::run_one_binary() {
   return;
 }
 
-void MultivariateConditionalMCMC::run_one_trick_binary() {
+void MultivariateConditionalMCMC::run_one_trick_binary(std::string fix_sigma) {
   //sample_latent_data();
 
   sample_u();
@@ -466,6 +468,7 @@ void MultivariateConditionalMCMC::run_one_trick_binary() {
   //std::cout<<"sample alloca and relabel"<<std::endl;
   // sample c | rest and reorganize the all and nall parameters, and c as well
   // sample_allocations_and_relabel();
+  _relabel();
 
   sample_means_obj->perform_update_trick_na(Ctilde);
 
@@ -489,7 +492,9 @@ void MultivariateConditionalMCMC::run_one_trick_binary() {
 
   //std::cout<<"sample sigmabar"<<std::endl;
   // FIXED TO THE IDENTITY FOR THE APPLICATION
-  //sample_sigma_bar();
+  if (fix_sigma == "FALSE"){
+    sample_sigma_bar();
+  }
 
   //std::cout<<"sample Psi"<<std::endl;
   sample_Psi();
@@ -688,10 +693,13 @@ void MultivariateConditionalMCMC::sample_allocations_and_relabel() {
   
   for (int i = 0; i < ndata; i++) {
     VectorXd probas = softmax_fun(log_probas.col(i));
+    //std::cout<<"probas: "<< probas<<std::endl;
     if (probas.sum() == 0){
-      clus_alloc[i] = categorical_rng(VectorXd::Constant(Ma + Mna,1), Rng::Instance().get()) - 1;
+      clus_alloc[i] = 0;
     }
-    else {clus_alloc[i] = categorical_rng(probas, Rng::Instance().get()) - 1;}
+    else {
+      clus_alloc[i] = categorical_rng(probas, Rng::Instance().get()) - 1;
+    }
   }
   //std::cout << "clus alloc before relabel"<<std::endl;
   //std::cout<< clus_alloc.transpose()<<std::endl;
@@ -1037,6 +1045,7 @@ void MultivariateConditionalMCMC::sample_etas() {
     // Now, I sample each eta from the full-cond multi-normal
     //#pragma omp parallel for
     for (int i=0; i < ndata; i++){
+      //std::cout<<"G.rowi: "<<G.row(i).transpose()<<std::endl;
       etas.row(i)=multi_normal_prec_rng(G.row(i).transpose(), Sn_bar[clus_alloc(i)], Rng::Instance().get());
     }
     return;

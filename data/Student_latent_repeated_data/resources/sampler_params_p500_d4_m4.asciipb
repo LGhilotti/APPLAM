@@ -1,0 +1,25 @@
+dpp {
+}
+
+wishart {
+  nu: 50
+  identity: true
+  sigma: 20
+}
+
+
+a: 0.5
+
+alphajump: 0.001
+
+betajump: 1
+
+agamma: 1.0
+
+bgamma: 0.3
+
+mh_sigma_means: 0.8
+
+mala_step_lambda: 0.00000000002
+
+seed_val: 12345

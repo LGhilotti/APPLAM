@@ -154,7 +154,8 @@ std::tuple<std::deque<py::bytes>, double , double>
                                   int d,
                                   std::string serialized_ranges, //const Eigen::MatrixXd &ranges,
                                   std::vector<int> init_allocs,
-				  int log_every = 200) {
+                                  std::string fix_sigma,
+                                  int log_every = 200) {
   Params params;
   params.ParseFromString(serialized_params);
   Eigen::MatrixXd data;
@@ -184,7 +185,7 @@ std::tuple<std::deque<py::bytes>, double , double>
     //py::print("current mean abs zetas: ", sampler.get_data().array().abs().mean());
     //py::print("current mean abs etas: ", sampler.get_etas().array().abs().mean());
 
-    sampler.run_one_trick_binary();
+    sampler.run_one_trick_binary(fix_sigma);
     if ((i + 1) % log_every == 0) {
       py::print("Trick, iter #", i + 1, " / ", ntrick);
     }
@@ -194,14 +195,14 @@ std::tuple<std::deque<py::bytes>, double , double>
     //py::print("current mean abs zetas: ", sampler.get_data().array().abs().mean());
     //py::print("current mean abs etas: ", sampler.get_etas().array().abs().mean());
 
-    sampler.run_one_binary();
+    sampler.run_one_binary(fix_sigma);
     if ((i + 1) % log_every == 0) {
       py::print("Burnin, iter #", i + 1, " / ", burnin);
     }
   }
 
   for (int i = 0; i < niter; i++) {
-    sampler.run_one_binary();
+    sampler.run_one_binary(fix_sigma);
     if (i % thin == 0) {
       std::string s;
       MultivariateMixtureState curr;
@@ -317,7 +318,8 @@ std::tuple<std::deque<py::bytes>, double , double>
                                   int d,
                                   std::string serialized_ranges, //const Eigen::MatrixXd &ranges,
                                   std::vector<int> init_allocs,
-				  int log_every = 200) {
+                                  std::string fix_sigma,
+                                  int log_every = 200) {
   Params params;
   params.ParseFromString(serialized_params);
   Eigen::MatrixXd data;
@@ -347,7 +349,7 @@ std::tuple<std::deque<py::bytes>, double , double>
     //py::print("current mean abs zetas: ", sampler.get_data().array().abs().mean());
     //py::print("current mean abs etas: ", sampler.get_etas().array().abs().mean());
 
-    sampler.run_one_trick_binary();
+    sampler.run_one_trick_binary(fix_sigma);
     if ((i + 1) % log_every == 0) {
       py::print("Trick, iter #", i + 1, " / ", ntrick);
     }
@@ -357,14 +359,14 @@ std::tuple<std::deque<py::bytes>, double , double>
     //py::print("current mean abs zetas: ", sampler.get_data().array().abs().mean());
     //py::print("current mean abs etas: ", sampler.get_etas().array().abs().mean());
 
-    sampler.run_one_binary();
+    sampler.run_one_binary(fix_sigma);
     if ((i + 1) % log_every == 0) {
       py::print("Burnin, iter #", i + 1, " / ", burnin);
     }
   }
 
   for (int i = 0; i < niter; i++) {
-    sampler.run_one_binary();
+    sampler.run_one_binary(fix_sigma);
     if (i % thin == 0) {
       std::string s;
       MultivariateMixtureState curr;

@@ -141,13 +141,16 @@ SPECIFIC_PARAMS_FILE = "data/Student_lik_repeated_data/resources/sampler_params_
 n = 3
 
 # Set sampler parameters
-ntrick =1000
+ntrick =500
 nburn=2000
-niter = 5000
+niter = 10000
+
+
+
 thin= 2
 log_ev=50
 
-n_reruns = 1
+n_reruns = 20
 
 
 dist=5
@@ -157,7 +160,7 @@ dist=5
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
     parser.add_argument("--p_values", nargs="+", default=["500"])
-    parser.add_argument("--d_values", nargs="+", default=["4"])
+    parser.add_argument("--d_values", nargs="+", default=["2","8"])
     parser.add_argument("--m_values", nargs="+", default=["4"])
     parser.add_argument("--n_by_clus", nargs="+", default=["50"])
     args = parser.parse_args()
@@ -167,13 +170,13 @@ if __name__ == "__main__" :
     M_s = list(map(int, args.m_values))
     n_percluster_s = list(map(int, args.n_by_clus))
 
-
-    list_performance_applam = list()
-    list_performance_lamb = list()
+    
 
     # Outer cycle for reading the different datasets and perform the estimation
     for p,d,M,npc in product(p_s, d_s, M_s, n_percluster_s):   
 
+      list_performance_applam = list()
+      list_performance_lamb = list()
 
       #######################################
       ### READ DATA AND PRE-PROCESSING ######
@@ -183,7 +186,7 @@ if __name__ == "__main__" :
       
       ranges = np.array([np.full(d,-10.),np.full(d,10.)])
       
-      sigma_bar_prec = np.repeat(1, p)
+      sigma_bar_prec = np.repeat(0.1, p)
       sigma_bar_cov = 1/sigma_bar_prec
       #lamb = create_lambda(p,d)
       delta_cov = np.eye(d)
@@ -245,7 +248,7 @@ if __name__ == "__main__" :
         #expected_points = [1,5,10]        
         #rho_s = expected_points/square_vol
         
-        rho_s = [0.05, 0.1, 0.2]
+        rho_s = [0.5, 1, 5]
 
         for rho in rho_s:
 
@@ -359,50 +362,54 @@ if __name__ == "__main__" :
             ####### Save inferred quantities in dataframe ############################
             #########################################################################
 
-            list_performance_applam.append(["APPLAM", p,d,M,npc,sampler_aniso.means_ar, sampler_aniso.lambda_ar, rho, post_mode_nclus_aniso,
+            list_performance_applam.append([j, "APPLAM", p,d,M,npc,sampler_aniso.means_ar, sampler_aniso.lambda_ar, rho, post_mode_nclus_aniso,
                                 post_avg_nclus_aniso, post_avg_nonall_aniso, ari_best_clus_aniso, CI_aris_aniso])
 
           
         #####################
         ### LAMB ############
         #####################
-        conc_dir = 1
         nr = np.shape(data_scaled)[0]
         nc = np.shape(data_scaled)[1]
         y_r = robjects.r.matrix(data_scaled, nrow=nr, ncol=nc)
-        res_lamb = np.array(DL_mixture_r(y = y_r, nrun_lamb = 10^4, burn_lamb = 10^3,  thin_lamb = 2, conc_dir = conc_dir))
+          
+        conc_dir_s = [0.1, 0.5, 1]
         
-        res_lamb_df = pd.DataFrame(res_lamb.T)
-        nclus_lamb_chain = res_lamb_df.nunique()
+        for conc_dir in conc_dir_s:
         
-        
-        vals_, counts_ = np.unique(nclus_lamb_chain, return_counts=True)
-        post_mode_nclus_lamb = vals_[np.argwhere(counts_ == np.max(counts_))][0,0]
-        print("mode: ", post_mode_nclus_lamb)
-        
-        post_avg_nclus_lamb = np.mean(nclus_lamb_chain)
-        print("mean: ", post_avg_nclus_lamb)
-        
-        
-        # Best clustering estimate according to Binder's loss
-        best_clus_lamb = cluster_estimate(np.array(res_lamb))
-        print("best clus: ",best_clus_lamb)
-            
-        # ARI of the best clustering
-        ari_best_clus_lamb = adjusted_rand_score(true_clus, best_clus_lamb)
-        # ARIs of the clusterings along the iterations
-        aris_chain_lamb = np.apply_along_axis(lambda x,y:adjusted_rand_score(y,x), 1, res_lamb, true_clus)
-        mean_aris_lamb, sigma_aris_lamb = np.mean(aris_chain_lamb), np.std(aris_chain_lamb)
-        # CI of the previous ARIs
-        CI_aris_lamb = norm.interval(0.95, loc=mean_aris_lamb, scale=sigma_aris_lamb/sqrt(len(aris_chain_lamb)))
-        
-        list_performance_lamb.append(["Lamb", p,d,M,npc, conc_dir, post_mode_nclus_lamb,
-                                post_avg_nclus_lamb, ari_best_clus_lamb, CI_aris_lamb])
+          
+          res_lamb = np.array(DL_mixture_r(y = y_r, nrun_lamb = 10^5, burn_lamb = 10^3,  thin_lamb = 2, n_init_clusters = 50, conc_dir = conc_dir))
+          
+          res_lamb_df = pd.DataFrame(res_lamb.T)
+          nclus_lamb_chain = res_lamb_df.nunique()
+          
+          
+          vals_, counts_ = np.unique(nclus_lamb_chain, return_counts=True)
+          post_mode_nclus_lamb = vals_[np.argwhere(counts_ == np.max(counts_))][0,0]
+          print("mode: ", post_mode_nclus_lamb)
+          
+          post_avg_nclus_lamb = np.mean(nclus_lamb_chain)
+          print("mean: ", post_avg_nclus_lamb)
+          
+          
+          # Best clustering estimate according to Binder's loss
+          best_clus_lamb = cluster_estimate(np.array(res_lamb))
+          print("best clus: ",best_clus_lamb)
+              
+          # ARI of the best clustering
+          ari_best_clus_lamb = adjusted_rand_score(true_clus, best_clus_lamb)
+          # ARIs of the clusterings along the iterations
+          aris_chain_lamb = np.apply_along_axis(lambda x,y:adjusted_rand_score(y,x), 1, res_lamb, true_clus)
+          mean_aris_lamb, sigma_aris_lamb = np.mean(aris_chain_lamb), np.std(aris_chain_lamb)
+          # CI of the previous ARIs
+          CI_aris_lamb = norm.interval(0.95, loc=mean_aris_lamb, scale=sigma_aris_lamb/sqrt(len(aris_chain_lamb)))
+          
+          list_performance_lamb.append([j, "Lamb", p,d,M,npc, conc_dir, post_mode_nclus_lamb,
+                                  post_avg_nclus_lamb, ari_best_clus_lamb, CI_aris_lamb])
 
-    df_performance_applam = pd.DataFrame(list_performance_applam, columns=('model', 'p','d','M','npc','means_ar','lambda_ar', 'intensity',
-                                        'mode_nclus', 'avg_nclus', 'avg_nonalloc', 'ari_best_clus', 'CI_aris'))
-    df_performance_applam.to_csv(os.path.join(outpath_d, "df_performance_applam.csv"))
-    
-    df_performance_lamb = pd.DataFrame(list_performance_lamb, columns=('model', 'p','d','M','npc','conc_dir',
-                                        'mode_nclus', 'avg_nclus', 'ari_best_clus', 'CI_aris'))
-    df_performance_lamb.to_csv(os.path.join(outpath_d, "df_performance_lamb.csv"))
+      df_performance_applam = pd.DataFrame(list_performance_applam, columns=('n_dataset', 'model', 'p','d','M','npc','means_ar','lambda_ar', 'intensity', 'mode_nclus', 'avg_nclus', 'avg_nonalloc', 'ari_best_clus', 'CI_aris'))
+      df_performance_applam.to_csv(os.path.join(outpath_d, "df_performance_applam_p{0}_d{1}.csv".format(p,d)))
+      
+      df_performance_lamb = pd.DataFrame(list_performance_lamb, columns=('n_dataset', 'model', 'p','d','M','npc','conc_dir',
+                                          'mode_nclus', 'avg_nclus', 'ari_best_clus', 'CI_aris'))
+      df_performance_lamb.to_csv(os.path.join(outpath_d, "df_performance_lamb_p{0}_d{1}.csv".format(p,d)))

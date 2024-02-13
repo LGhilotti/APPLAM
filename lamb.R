@@ -3,15 +3,15 @@ library(Rcpp)
 sourceCpp("DL_linear_split_merge_package.cpp")
 
 DL_mixture_function <- function(y, d_lamb = 2, nrun_lamb = 10^4, burn_lamb = 10^3,  thin_lamb = 2,
-      a_s = 1, b_s = 0.3, a = 0.5, diag_psi_iw=20, niw_kap=1e-3, conc_dir = 1, seed=1234){
+      a_s = 1, b_s = 0.3, a = 0.5, diag_psi_iw=20, niw_kap=1e-3, n_init_clusters = 80, conc_dir = 1, seed=1234){
 
   set.seed(seed)  
   
   n = nrow(y)
   
   # 4.2) Empirical Estimation the Latent Dimension d and Initializing eta & lambda
-  #pca.results=irlba::irlba(y, nv=40)
-  pca.results=svd(y)
+  pca.results=irlba::irlba(y, nv=40)
+  #pca.results=svd(y)
   
   # d is set to be the minimum number of eigenvalues explaining at least 95% of the variability in the data.
   #cum_eigs= cumsum(pca.results$d)/sum(pca.results$d)
@@ -25,7 +25,7 @@ DL_mixture_function <- function(y, d_lamb = 2, nrun_lamb = 10^4, burn_lamb = 10^
   
   # 4.3) Initializing Cluster Allocations [IMPACTFULL]
   #cluster.start = rep(0,n)
-  cluster.start = kmeans(y, 10)$cluster
+  cluster.start = kmeans(y, n_init_clusters)$cluster - 1
   
   # 4.4) Set Prior Parameter of Lamb
   nu=d_lamb+50

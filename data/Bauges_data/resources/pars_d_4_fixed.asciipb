@@ -7,14 +7,14 @@ fixed_multi_prec {
 
 a: 0.5
 
-alphajump: 50
+alphajump: 0.001
 
-betajump: 150
+betajump: 1
 
 agamma: 1
 
 bgamma: 1
 
-mh_sigma_means: 0.01
+mh_sigma_means: 0.005
 
 mala_step_lambda: 0.000000002
