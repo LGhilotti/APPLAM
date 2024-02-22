@@ -142,7 +142,7 @@ n = 3
 
 # Set sampler parameters
 ntrick =500
-nburn=2000
+nburn=500
 niter = 5000
 
 
@@ -159,8 +159,8 @@ dist=5
 
 if __name__ == "__main__" :
     parser = argparse.ArgumentParser()
-    parser.add_argument("--p_values", nargs="+", default=["500"])
-    parser.add_argument("--d_values", nargs="+", default=["2","4"])
+    parser.add_argument("--p_values", nargs="+", default=["1000"])
+    parser.add_argument("--d_values", nargs="+", default=["8"])
     parser.add_argument("--m_values", nargs="+", default=["4"])
     parser.add_argument("--n_by_clus", nargs="+", default=["50"])
     args = parser.parse_args()
@@ -182,11 +182,13 @@ if __name__ == "__main__" :
       ### READ DATA AND PRE-PROCESSING ######
       #######################################
       
-      seed = 12345 
+      #seed = 12345 
+      #seed = 1234
+      seed = 123
       
       ranges = np.array([np.full(d,-10.),np.full(d,10.)])
       
-      sigma_bar_prec = np.repeat(0.5, p)
+      sigma_bar_prec = np.repeat(10, p)
       sigma_bar_cov = 1/sigma_bar_prec
       #lamb = create_lambda(p,d)
       delta_cov = np.eye(d)
