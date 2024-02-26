@@ -18,8 +18,8 @@ agamma: 1.0
 
 bgamma: 0.3
 
-mh_sigma_means: 0.02
+mh_sigma_means: 0.01
 
-mala_step_lambda: 0.00000000002
+mala_step_lambda: 0.00000000008
 
 seed_val: 12345

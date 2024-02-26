@@ -141,16 +141,16 @@ SPECIFIC_PARAMS_FILE = "data/Student_lik_repeated_data_n1000/resources/sampler_p
 n = 3
 
 # Set sampler parameters
-ntrick =500
-nburn=2000
-niter = 10000
+ntrick =200
+nburn=500
+niter = 1000
 
 
 
 thin= 2
 log_ev=50
 
-n_reruns = 1
+n_reruns = 20
 
 
 dist=5
@@ -248,7 +248,7 @@ if __name__ == "__main__" :
         #expected_points = [1,5,10]        
         #rho_s = expected_points/square_vol
         
-        rho_s = [0.5, 1, 5]
+        rho_s = [0.05, 0.1, 0.2]
 
         for rho in rho_s:
 
